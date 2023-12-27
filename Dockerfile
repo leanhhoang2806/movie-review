@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client
 
 # Install dependencies from requirements.txt
-# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Use a smaller base image for the final image
 FROM tensorflow/tensorflow:latest-gpu
