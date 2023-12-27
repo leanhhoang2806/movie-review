@@ -2,24 +2,22 @@ import pandas as pd
 import re
 import string
 from sklearn.metrics import confusion_matrix, classification_report
-from transformers import BertTokenizer, BertForSequenceClassification, AdamW
-from torch.utils.data import DataLoader, TensorDataset, random_split
-import torch
+from transformers import BertTokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+import tensorflow as tf
+from transformers import TFBertForSequenceClassification, BertConfig
 
-# Check if a GPU is available and set device accordingly
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    print("CUDA is available. Using GPU.")
-else:
-    device = torch.device("cpu")
-    print("CUDA is not available. Using CPU.")
+# Check if a GPU is available
+physical_devices = tf.config.list_physical_devices('GPU')
+device = "GPU" if len(physical_devices) > 0 else "CPU"
+print(f"{device} is available.")
 
 csv_file_path = './IMDB Dataset.csv'
 imdb_df = pd.read_csv(csv_file_path)
-
-# Assuming 'review' is the column containing the reviews
-reviews = imdb_df['review']
 
 # Define a regular expression pattern for extracting text between quotation marks
 movie_name_pattern = re.compile(r'"([^"]+)"')
@@ -28,7 +26,7 @@ movie_name_pattern = re.compile(r'"([^"]+)"')
 extracted_data = []
 
 # Loop through each review and extract text between quotation marks
-for review in reviews:
+for review in imdb_df['review']:
     # Extract text between quotation marks using the defined pattern
     matches = re.findall(movie_name_pattern, review)
     
@@ -47,7 +45,7 @@ for review in reviews:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-# percentage of extraction successfully
+# Percentage of extraction successfully
 percentage = (extracted_df.shape[0] / imdb_df.shape[0]) * 100
 print(f"The amount of extracted data is {percentage:.2f} %")
 
@@ -62,70 +60,55 @@ train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for train
 label_encoder = LabelEncoder()
 train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
 
-# Tokenize the training data
+# Tokenize the training data using BERT tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
 
-tokenized_reviews = tokenizer(train_data['review'].tolist(), padding=True, truncation=True, return_tensors='pt')
-tokenized_reviews = {key: value.to(device) for key, value in tokenized_reviews.items()}  # Move to GPU
-labels = torch.tensor(train_data['encoded_labels'].tolist(), device=device)
-
-# Create a PyTorch Dataset
-dataset = TensorDataset(tokenized_reviews['input_ids'], tokenized_reviews['attention_mask'], labels)
+# Create a TensorFlow Dataset
+dataset = tf.data.Dataset.from_tensor_slices(({
+    'input_ids': tokenized_reviews['input_ids'],
+    'attention_mask': tokenized_reviews['attention_mask']
+}, train_data['encoded_labels']))
 
 # Split the dataset into training and validation sets
-train_size = int(0.8 * len(dataset))
-val_size = len(dataset) - train_size
-train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+train_size = int(0.8 * len(train_data))
+val_size = len(train_data) - train_size
+train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(32)
+val_dataset = dataset.skip(train_size).batch(32)
 
-# Create DataLoader for training and validation
-train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+# Build the BERT-based model
+config = BertConfig.from_pretrained('bert-base-uncased', num_labels=len(set(train_data['movie_names'])))
+bert_model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
+model = Sequential([
+    bert_model,
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(len(set(train_data['movie_names'])), activation='softmax')
+])
 
-# Load the transformer model for sequence classification
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=len(set(train_data['movie_names']))).to(device)
-optimizer = AdamW(model.parameters(), lr=1e-5)
+# Compile the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 # Training loop
 num_epochs = 5
-for epoch in range(num_epochs):
-    model.train()
-    for batch in train_dataloader:
-        inputs = {'input_ids': batch[0].to(device), 'attention_mask': batch[1].to(device), 'labels': batch[2].to(device)}
-        outputs = model(**inputs)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset)
 
 # Save the trained model
-model.save_pretrained('path/to/saved_model')
+model.save('path/to/saved_model')
 
 # Load the trained model for inference
-loaded_model = BertForSequenceClassification.from_pretrained('path/to/saved_model').to(device)
+loaded_model = tf.keras.models.load_model('path/to/saved_model')
 
 # Evaluation on the test set
-loaded_model.eval()
-all_preds = []
-all_labels = []
-
-with torch.no_grad():
-    for batch in val_dataloader:
-        inputs = {'input_ids': batch[0].to(device), 'attention_mask': batch[1].to(device), 'labels': batch[2].to(device)}
-        outputs = loaded_model(**inputs)
-        predictions = torch.argmax(outputs.logits, dim=1)
-        
-        # Collect predictions and labels
-        all_preds.extend(predictions.cpu().numpy())
-        all_labels.extend(batch[2].cpu().numpy())
+val_predictions = loaded_model.predict(val_dataset)
+val_preds = tf.argmax(val_predictions, axis=1).numpy()
 
 # Compute confusion matrix
-conf_matrix = confusion_matrix(all_labels, all_preds)
+conf_matrix = confusion_matrix(train_data['encoded_labels'][-val_size:], val_preds)
 
 # Print confusion matrix
 print("Confusion Matrix:")
 print(conf_matrix)
 
 # Optionally, you can also print a classification report
-class_report = classification_report(all_labels, all_preds)
-print("Classification Report:")
-print(class_report)
+class_report = classification_report(train_data)
