@@ -26,4 +26,4 @@ COPY --from=builder /usr/local/cuda /usr/local/cuda
 
 
 # Set the entry point to run main.py when the container starts
-ENTRYPOINT ["python", "-m", "app.movie_review"]
+ENTRYPOINT ["python", "-m", "movie_review"]
