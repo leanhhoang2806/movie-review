@@ -9,15 +9,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cuda-toolkit-12-2 \
     openssh-client
 
-# Install dependencies from requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
 # Use a smaller base image for the final image
 FROM tensorflow/tensorflow:latest-gpu
 
 # Copy the installed dependencies from the builder image
 COPY --from=builder /usr/local/cuda /usr/local/cuda
 COPY . .
+
+# Install dependencies from requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Set the entry point to run main.py when the container starts
 ENTRYPOINT ["python", "-m", "movie_review.py"]
