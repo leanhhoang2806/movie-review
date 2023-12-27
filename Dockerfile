@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements.txt file to the container's working directory
-COPY requirements.txt .
+# Copy the rest of the application files
+COPY . .
 
 # Install dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
@@ -24,11 +24,6 @@ FROM tensorflow/tensorflow:latest-gpu
 # Copy the installed dependencies from the builder image
 COPY --from=builder /usr/local/cuda /usr/local/cuda
 
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy the rest of the application files
-COPY . .
 
 # Set the entry point to run main.py when the container starts
-ENTRYPOINT ["python", "movie_review"]
+ENTRYPOINT ["python", "app.movie_review"]
