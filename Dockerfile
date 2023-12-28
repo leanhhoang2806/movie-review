@@ -1,5 +1,5 @@
 # Use the TensorFlow GPU base image
-FROM nvidia/cuda:7.5-cudnn5-devel as builder
+FROM nvidia/cuda:7.5-cudnn5-devel
 
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -21,4 +21,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Set the entry point to run main.py when the container starts
-ENTRYPOINT ["python", "-m", "movie_review.py"]
+ENTRYPOINT ["python", "-m", "movie_review"]
