@@ -1,5 +1,5 @@
 # Use the TensorFlow GPU base image
-FROM nvidia/cuda:12.3.1-devel-ubuntu20.04 as builder
+FROM nvidia/cuda:12.3.1-devel-ubuntu20.04
 
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
