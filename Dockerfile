@@ -1,6 +1,10 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:latest-gpu
 
+# Install required packages for downloading cuDNN
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcudnn8=8.9.0.26-1+cuda12.2 \
+    libcudnn8-dev=8.9.0.26-1+cuda12.2
 # Print CUDA toolkit version
 RUN nvcc --version > cuda_version.txt
 
