@@ -2,12 +2,12 @@
 FROM tensorflow/tensorflow:latest-gpu
 
 # Install required packages for downloading Miniconda
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    python3-pip \
-    cuda-toolkit-12-2 \
-    openssh-client
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     build-essential \
+#     python3-dev \
+#     python3-pip \
+#     cuda-toolkit-12-2 \
+#     openssh-client
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -20,9 +20,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # # Copy the installed dependencies from the builder image
 # COPY --from=builder /usr/local/cuda /usr/local/cuda
-
-# Set the working directory inside the container
-WORKDIR /app
 
 # Copy the rest of the application files
 COPY . .
