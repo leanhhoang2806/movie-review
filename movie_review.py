@@ -1,18 +1,10 @@
 
-import tensorflow as tf
 
-# Check if a GPU is available
-if tf.config.list_physical_devices('GPU'):
-    # Print the list of available GPUs
-    gpus = tf.config.list_physical_devices('GPU')
-    print("Available GPUs:")
-    for gpu in gpus:
-        print(gpu)
-else:
-    print("No GPU available. Running on CPU.")
-
-
-
+from tensorflow.python.client import device_lib
+def get_available_devices():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos]
+print(get_available_devices()) 
 
 # import pandas as pd
 # import re
