@@ -1,5 +1,5 @@
 # Use the TensorFlow GPU base image
-FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as builder
+FROM nvidia/cuda:7.5-cudnn5-devel as builder
 
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -8,9 +8,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     cuda-toolkit-12-2 \
     openssh-client
-
-# Use a smaller base image for the final image
-FROM tensorflow/tensorflow:latest-gpu
 
 # Copy the installed dependencies from the builder image
 COPY --from=builder /usr/local/cuda /usr/local/cuda
