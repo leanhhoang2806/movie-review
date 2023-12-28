@@ -1,17 +1,19 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:latest-gpu
 
-# Use the TensorFlow GPU base image
-FROM tensorflow/tensorflow:latest-gpu
-
 # Print CUDA toolkit version
-RUN nvcc --version
+RUN nvcc --version > cuda_version.txt
 
 # Print TensorFlow version
-RUN python -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__)"
+RUN python -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__)" > tensorflow_version.txt
 
 # Print cuDNN version
-RUN echo "cuDNN version: $(cat /usr/include/cudnn_version.h | grep CUDNN_MAJOR -A 2)"
+RUN cat /usr/include/cudnn_version.h | grep CUDNN_MAJOR -A 2 > cudnn_version.txt
+
+# Display the contents of the version files
+RUN cat cuda_version.txt
+RUN cat tensorflow_version.txt
+RUN cat cudnn_version.txt
 
 
 
