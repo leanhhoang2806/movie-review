@@ -1,20 +1,16 @@
 # Use the TensorFlow GPU base image
-# Use the NVIDIA CUDA image with specified versions
 FROM nvidia/cuda:12.3.1-devel-ubuntu20.04
-# Set the working directory inside the container
-WORKDIR /app
 
-# Install required packages
+# Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    python3.9 \
-    python3.9-dev \
+    python3-dev \
     python3-pip \
-    clang-16 \
-    bazel-6.1.0
+    cuda-toolkit-12-2 \
+    openssh-client
 
-# Create a symbolic link for Python
-RUN ln -s /usr/bin/python3.9 /usr/bin/python
+# Copy the installed dependencies from the builder image
+COPY --from=builder /usr/local/cuda /usr/local/cuda
 # Copy just the requirements file to leverage Docker cache
 COPY requirements.txt requirements.txt
 
