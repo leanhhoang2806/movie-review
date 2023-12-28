@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy the installed dependencies from the builder image
 # COPY --from=builder /usr/local/cuda /usr/local/cuda
-RUN cat /usr/local/cuda/version.txt
+# RUN cat /usr/local/cuda/version.txt
 # Copy just the requirements file to leverage Docker cache
 COPY requirements.txt requirements.txt
 
