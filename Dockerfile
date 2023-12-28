@@ -15,7 +15,7 @@ FROM tensorflow/tensorflow:latest-gpu
 # Copy the installed dependencies from the builder image
 COPY --from=builder /usr/local/cuda /usr/local/cuda
 # Copy just the requirements file to leverage Docker cache
-COPY requirements.txt /app/
+COPY requirements.txt /app/requirements.txt
 
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
