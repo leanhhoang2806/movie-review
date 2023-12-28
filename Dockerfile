@@ -1,5 +1,5 @@
 # Use the NVIDIA CUDA image
-FROM nvidia/cuda:11.0-cudnn8-devel-ubuntu18.04 as builder
+FROM nvidia/cuda:12.3.1-devel-ubuntu22.04 as builder
 
 
 # Install any needed packages specified in requirements.txt
