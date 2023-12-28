@@ -1,7 +1,6 @@
 # Use the TensorFlow GPU base image
 # Use the NVIDIA CUDA image with specified versions
-FROM nvidia/cuda:12.2-cudnn8-devel-ubuntu20.04
-
+FROM nvidia/cuda:12.3.1-devel-ubuntu20.04
 # Set the working directory inside the container
 WORKDIR /app
 
