@@ -1,6 +1,7 @@
 
 import tensorflow as tf
 
+print("hello world")
 # Check if a GPU is available
 if tf.config.list_physical_devices('GPU'):
     # Print the list of available GPUs
