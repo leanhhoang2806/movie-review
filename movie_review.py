@@ -89,11 +89,10 @@ with strategy.scope():
     # Build the BERT-based model
     config = BertConfig.from_pretrained('bert-base-uncased', num_labels=len(set(train_data['movie_names'])))
     bert_model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
+
+    # Create a Sequential model with BERT as the first layer
     model = Sequential([
         bert_model,
-        Dense(128, activation='relu'),
-        Dropout(0.5),
-        Dense(len(set(train_data['movie_names'])), activation='softmax')
     ])
 
     # Compile the model
@@ -122,3 +121,4 @@ with strategy.scope():
 
     # Optionally, you can also print a classification report
     class_report = classification_report(train_data)
+
