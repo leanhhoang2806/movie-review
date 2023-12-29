@@ -7,6 +7,29 @@ def get_available_devices():
 print("hello world")
 print(get_available_devices()) 
 
+import subprocess
+
+def check_nvcc_version():
+    try:
+        # Run the nvcc --version command
+        result = subprocess.run(['nvcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Check if the command was successful
+        if result.returncode == 0:
+            # Print the nvcc version
+            print(result.stdout.strip())
+        else:
+            # Print an error message
+            print(f"Error running nvcc --version: {result.stderr.strip()}")
+
+    except Exception as e:
+        # Handle exceptions
+        print(f"An error occurred: {e}")
+
+# Call the function
+check_nvcc_version()
+
+
 # import pandas as pd
 # import re
 # import string
