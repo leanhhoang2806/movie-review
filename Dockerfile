@@ -5,7 +5,7 @@ FROM tensorflow/tensorflow:latest-gpu
 RUN pip uninstall tensorflow -y
 
 # Install the GPU version of TensorFlow
-RUN pip install tensorflow-gpu -y
+RUN pip install tensorflow-gpu
 
 # Install required packages for downloading Miniconda
 # RUN apt-get update && apt-get install -y --no-install-recommends \
