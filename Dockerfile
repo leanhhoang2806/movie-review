@@ -10,14 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     libcudnn8-dev
 
-ENV NVID_VER=545.23.6
-
-# Change directory and update symbolic links
-RUN cd /usr/lib/x86_64-linux-gnu/ \
-    && rm libcuda.so \
-    && rm libcuda.so.1 \
-    && ln -s libcuda.so.$NVID_VER libcuda.so \
-    && ln -s libcuda.so.$NVID_VER libcuda.so.1
 # Set the working directory inside the container
 WORKDIR /app
 
