@@ -1,6 +1,8 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:latest-gpu
 
+RUN pip uninstall tensorflow
+RUN pip install tensorflow-gpu
 
 # Install required packages for downloading Miniconda
 # RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -18,9 +20,6 @@ COPY requirements.txt /app/requirements.txt
 
 # Install dependencies from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
-RUN pip uninstall tensorflow
-RUN pip install tensorflow-gpu
 
 # # Copy the installed dependencies from the builder image
 # COPY --from=builder /usr/local/cuda /usr/local/cuda
