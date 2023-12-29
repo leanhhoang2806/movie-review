@@ -1,8 +1,6 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:2.15.0-gpu
 
-RUN pip install --upgrade tensorflow-gpu
-
 # Install required packages for downloading Miniconda
 # RUN apt-get update && apt-get install -y --no-install-recommends \
 #     build-essential \
