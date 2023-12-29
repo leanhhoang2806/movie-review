@@ -28,4 +28,4 @@ ENV TF_FORCE_GPU_ALLOW_GROWTH=true
 
 
 # Set the entry point to run main.py when the container starts
-# ENTRYPOINT ["python", "-m", "movie_review"]
+ENTRYPOINT ["python", "-m", "movie_review"]
