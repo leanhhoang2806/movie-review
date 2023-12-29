@@ -1,7 +1,7 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:latest-gpu
 
-RUN pip uninstall tensorflow
+RUN pip3 uninstall tensorflow
 RUN pip install tensorflow-gpu
 
 # Install required packages for downloading Miniconda
