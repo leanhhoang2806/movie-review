@@ -8,7 +8,7 @@ RUN nvcc --version
 RUN python -c "import tensorflow as tf; print('TensorFlow version:', tf.__version__)"
 
 # Print cuDNN version
-RUN cat /usr/include/cudnn_version.h | grep CUDNN_MAJOR -A 2 > cudnn_version.txt
+RUN echo "cuDNN version: $(dpkg -l | grep cudnn)" > cudnn_version.txt
 
 # Display the contents of the version files
 RUN cat cuda_version.txt
