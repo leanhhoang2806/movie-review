@@ -1,33 +1,19 @@
 
 
-from tensorflow.python.client import device_lib
-def get_available_devices():
-    local_device_protos = device_lib.list_local_devices()
-    return [x.name for x in local_device_protos]
-print("hello world")
-print(get_available_devices()) 
+import tensorflow as tf
 
-import subprocess
+# List all available physical devices
+local_device_protos = tf.config.list_physical_devices()
 
-def check_nvcc_version():
-    try:
-        # Run the nvcc --version command
-        result = subprocess.run(['nvcc', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+# Filter out only GPU devices
+gpu_devices = [device.name for device in local_device_protos if "GPU" in device.device_type]
 
-        # Check if the command was successful
-        if result.returncode == 0:
-            # Print the nvcc version
-            print(result.stdout.strip())
-        else:
-            # Print an error message
-            print(f"Error running nvcc --version: {result.stderr.strip()}")
-
-    except Exception as e:
-        # Handle exceptions
-        print(f"An error occurred: {e}")
-
-# Call the function
-check_nvcc_version()
+if gpu_devices:
+    print("GPU devices found:")
+    for device in gpu_devices:
+        print(device)
+else:
+    print("No GPU devices found. Running on CPU.")
 
 
 # import pandas as pd
