@@ -1,7 +1,6 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:latest-gpu
 
-# ==================
 
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -9,7 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     python3-pip \
     cuda-toolkit-12-2 \
-    openssh-client
+    openssh-client \
+    libcudnn8=8.9.0.26-1+cuda12.2 \
+    libcudnn8-dev=8.9.0.26-1+cuda12.2
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -25,6 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application files
 COPY . .
+ENV TF_FORCE_GPU_ALLOW_GROWTH=true
+
 
 # Set the entry point to run main.py when the container starts
 ENTRYPOINT ["python", "-m", "movie_review"]
