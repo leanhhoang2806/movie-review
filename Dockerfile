@@ -7,7 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     python3-pip \
     cuda-toolkit-12-2 \
-    openssh-client
+    openssh-client \
+    libcudnn8-dev=8.9.0.26-1+cuda12.2
 
 # Set the working directory inside the container
 WORKDIR /app
