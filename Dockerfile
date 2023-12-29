@@ -10,8 +10,7 @@ RUN python -c "import tensorflow as tf; print('TensorFlow version:', tf.__versio
 # Print cuDNN version
 RUN echo "cuDNN version: $(dpkg -l | grep cudnn)" > cudnn_version.txt
 
-# Display the contents of the version files
-RUN cat tensorflow_version.txt
+
 RUN cat cudnn_version.txt
 
 
