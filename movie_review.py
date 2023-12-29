@@ -1,19 +1,11 @@
 
+from tensorflow.python.client import device_lib
 
-import tensorflow as tf
+def get_available_devices():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos]
 
-# List all available physical devices
-local_device_protos = tf.config.list_physical_devices()
-
-# Filter out only GPU devices
-gpu_devices = [device.name for device in local_device_protos if "GPU" in device.device_type]
-print(local_device_protos)
-if gpu_devices:
-    print("GPU devices found:")
-    for device in gpu_devices:
-        print(device)
-else:
-    print("No GPU devices found. Running on CPU.")
+print(get_available_devices())
 
 
 # import pandas as pd
