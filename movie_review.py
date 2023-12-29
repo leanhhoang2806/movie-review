@@ -7,7 +7,7 @@ local_device_protos = tf.config.list_physical_devices()
 
 # Filter out only GPU devices
 gpu_devices = [device.name for device in local_device_protos if "GPU" in device.device_type]
-
+print(local_device_protos)
 if gpu_devices:
     print("GPU devices found:")
     for device in gpu_devices:
