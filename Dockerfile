@@ -1,12 +1,12 @@
 # Use the TensorFlow GPU base image
-FROM tensorflow/tensorflow:2.10.0-gpu
+FROM tensorflow/tensorflow:2.3.0-gpu
 
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     python3-pip \
-    cuda-toolkit \
+    cuda-toolkit-10-1 \
     openssh-client \
     libcudnn8-dev
 
