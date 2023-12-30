@@ -83,10 +83,12 @@ with strategy.scope():
     }, train_data['encoded_labels']))
 
     # Split the dataset into training and validation sets
-# Split the dataset into training and validation sets
+    print("spliting data set")
     train_size = int(0.8 * len(train_data))
-    val_size = len(train_data) - train_size
-    train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(32)
+    new_batch_size = 8  # Choose a smaller batch size
+    train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(new_batch_size)
+    val_dataset = dataset.skip(train_size).batch(new_batch_size)
+
 
     val_dataset = dataset.skip(train_size).batch(32)
 
@@ -106,6 +108,7 @@ with strategy.scope():
     num_epochs = 5
      # Specify the number of steps per epoch
     steps_per_epoch = len(train_data) // (32 * num_workers)
+    print("Starting training the model")
     model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset, steps_per_epoch=steps_per_epoch)
 
 
