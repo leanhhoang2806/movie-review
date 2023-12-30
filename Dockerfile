@@ -1,6 +1,8 @@
 # Use the TensorFlow GPU base image
 FROM tensorflow/tensorflow:2.3.0-gpu
 
+RUN apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+
 # Install required packages for downloading Miniconda
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
