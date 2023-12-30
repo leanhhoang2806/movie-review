@@ -18,9 +18,9 @@ scikit-learn==0.24.2
 scipy==1.5.4
 six==1.16.0
 threadpoolctl==3.1.0
-tokenizers==0.13.3
+tokenizers
 tqdm==4.64.1
-transformers==4.18.0
+transformers
 typing_extensions==4.1.1
 tzdata==2023.4
 urllib3==1.26.18
