@@ -22,7 +22,7 @@ from tensorflow.keras.layers import Dense, Flatten, GlobalAveragePooling2D, Conv
 num_workers = 2
 
 # Initialize the distributed strategy
-strategy = tf.distribute.MultiWorkerMirroredStrategy()
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
 with strategy.scope():
 
