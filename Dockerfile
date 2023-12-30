@@ -8,11 +8,8 @@ WORKDIR /app
 # Copy the requirements.txt file to the container's working directory
 COPY requirements.txt /app/requirements.txt
 
-# Install dependencies from requirements.txt
-# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# # Copy the installed dependencies from the builder image
-# COPY --from=builder /usr/local/cuda /usr/local/cuda
 
 # Copy the rest of the application files
 COPY . .
