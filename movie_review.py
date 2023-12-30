@@ -84,6 +84,7 @@ with strategy.scope():
     train_size = int(0.8 * len(train_data))
     val_size = len(train_data) - train_size
     train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(32)
+    
     val_dataset = dataset.skip(train_size).batch(32)
 
     # Build the BERT-based model
@@ -100,7 +101,10 @@ with strategy.scope():
 
     # Training loop
     num_epochs = 5
-    model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset)
+     # Specify the number of steps per epoch
+    steps_per_epoch = len(train_data) // (32 * num_workers)
+    model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset, steps_per_epoch=steps_per_epoch)
+
 
     # Save the trained model
     model.save('path/to/saved_model')
