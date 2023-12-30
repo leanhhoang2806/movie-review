@@ -5,7 +5,7 @@ fsspec==2022.1.0
 huggingface-hub==0.4.0
 idna==3.6
 joblib==1.1.1
-numpy==1.24.4
+numpy==1.19.5
 packaging==23.2
 pandas==2.0.3
 python-dateutil==2.8.2
