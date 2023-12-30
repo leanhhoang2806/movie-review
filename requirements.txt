@@ -1,5 +1,5 @@
 certifi==2023.11.17
-charset-normalizer==3.3.2
+charset-normalizer==3.0.1
 filelock==3.13.1
 fsspec==2023.12.2
 huggingface-hub==0.20.1
