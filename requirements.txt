@@ -19,7 +19,7 @@ scipy==1.5.4
 six==1.16.0
 threadpoolctl==3.1.0
 tokenizers==0.13.3
-tqdm==4.66.1
+tqdm==4.64.1
 transformers==4.36.2
 typing_extensions==4.9.0
 tzdata==2023.4
