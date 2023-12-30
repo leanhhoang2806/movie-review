@@ -20,6 +20,17 @@ from tensorflow.keras.layers import Dense, Flatten, GlobalAveragePooling2D, Conv
 
 # Define the number of workers
 num_workers = 2
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Currently, memory growth needs to be the same across GPUs
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
 
 # Initialize the distributed strategy
 strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
@@ -81,10 +92,11 @@ with strategy.scope():
     }, train_data['encoded_labels']))
 
     # Split the dataset into training and validation sets
+# Split the dataset into training and validation sets
     train_size = int(0.8 * len(train_data))
     val_size = len(train_data) - train_size
     train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(32)
-    
+
     val_dataset = dataset.skip(train_size).batch(32)
 
     # Build the BERT-based model
