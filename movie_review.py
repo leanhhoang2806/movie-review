@@ -91,7 +91,12 @@ with strategy.scope():
     # Split the dataset into training and test sets
     train_reviews, test_reviews, train_labels, test_labels = train_test_split(
         tokenized_reviews, labels, test_size=0.2, random_state=42
-)
+    )
+
+    # Further split the training set into training and validation sets
+    train_reviews, val_reviews, train_labels, val_labels = train_test_split(
+        train_reviews, train_labels, test_size=0.1, random_state=42
+    )
     print("Build BERT-based model")
     model = Sequential([
         bert_model,
