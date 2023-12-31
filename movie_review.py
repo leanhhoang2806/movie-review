@@ -9,8 +9,11 @@ from tensorflow.keras.layers import Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 import tensorflow as tf
-from transformers import TFBertForSequenceClassification, BertConfig
-import tensorflow as tf
+from transformers import BertTokenizer, TFBertModel
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
 import os
 import time
 from tensorflow.keras.models import Sequential
@@ -71,65 +74,105 @@ with strategy.scope():
     # Assuming 'train_data' is your DataFrame
     label_encoder = LabelEncoder()
     train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
-
-    # Tokenize the training data using BERT tokenizer
+    # Load BERT tokenizer and model
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
+    bert_model = TFBertModel.from_pretrained('bert-base-uncased')
 
-    # Create a TensorFlow Dataset
-    dataset = tf.data.Dataset.from_tensor_slices(({
-        'input_ids': tokenized_reviews['input_ids'],
-        'attention_mask': tokenized_reviews['attention_mask']
-    }, train_data['encoded_labels']))
+    # Tokenize reviews
+    tokenized_reviews = tokenizer(list(extracted_df['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
 
-    # Split the dataset into training and validation sets
-    print("spliting data set")
-    train_size = int(0.8 * len(train_data))
-    new_batch_size = 8  # Choose a smaller batch size
-    train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(new_batch_size)
-    val_dataset = dataset.skip(train_size).batch(new_batch_size)
+    # Convert movie names to numerical labels
+    label_encoder = LabelEncoder()
+    labels = label_encoder.fit_transform(extracted_df['movie_names'])
 
+    # Split the dataset into training and test sets
+    train_reviews, test_reviews, train_labels, test_labels = train_test_split(
+        tokenized_reviews, labels, test_size=0.2, random_state=42
+    )
 
-    val_dataset = dataset.skip(train_size).batch(32)
+    # Split the training set into training and validation sets
+    train_reviews, val_reviews, train_labels, val_labels = train_test_split(
+        train_reviews, train_labels, test_size=0.2, random_state=42
+    )
 
-    # Build the BERT-based model
-    config = BertConfig.from_pretrained('bert-small-uncased', num_labels=len(set(train_data['movie_names'])))
-    bert_model = TFBertForSequenceClassification.from_pretrained('bert-small-uncased', config=config)
-
-
-    # Create a Sequential model with BERT as the first layer
+    # Build BERT-based model
     model = Sequential([
         bert_model,
+        Flatten(),
+        Dense(units=len(set(labels)), activation='softmax')  # Assuming you have n classes for movie names
     ])
 
     # Compile the model
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    # Training loop
-    num_epochs = 5
-     # Specify the number of steps per epoch
-    steps_per_epoch = len(train_data) // (32 * num_workers)
-    print("Starting training the model")
-    model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset, steps_per_epoch=steps_per_epoch)
+    # Train the model
+    model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels))
+
+    # Evaluate the model on the test set
+    test_loss, test_acc = model.evaluate(test_reviews, test_labels)
+    print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+
+    # Save the model for later use
+    model.save('movie_name_extraction_model')
+
+    # # Tokenize the training data using BERT tokenizer
+    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    # tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
+
+    # # Create a TensorFlow Dataset
+    # dataset = tf.data.Dataset.from_tensor_slices(({
+    #     'input_ids': tokenized_reviews['input_ids'],
+    #     'attention_mask': tokenized_reviews['attention_mask']
+    # }, train_data['encoded_labels']))
+
+    # # Split the dataset into training and validation sets
+    # print("spliting data set")
+    # train_size = int(0.8 * len(train_data))
+    # new_batch_size = 8  # Choose a smaller batch size
+    # train_dataset = dataset.take(train_size).shuffle(buffer_size=50000).batch(new_batch_size)
+    # val_dataset = dataset.skip(train_size).batch(new_batch_size)
 
 
-    # Save the trained model
-    model.save('path/to/saved_model')
+    # val_dataset = dataset.skip(train_size).batch(32)
 
-    # Load the trained model for inference
-    loaded_model = tf.keras.models.load_model('path/to/saved_model')
+    # # Build the BERT-based model
+    # config = BertConfig.from_pretrained('bert-small-uncased', num_labels=len(set(train_data['movie_names'])))
+    # bert_model = TFBertForSequenceClassification.from_pretrained('bert-small-uncased', config=config)
 
-    # Evaluation on the test set
-    val_predictions = loaded_model.predict(val_dataset)
-    val_preds = tf.argmax(val_predictions, axis=1).numpy()
 
-    # Compute confusion matrix
-    conf_matrix = confusion_matrix(train_data['encoded_labels'][-val_size:], val_preds)
+    # # Create a Sequential model with BERT as the first layer
+    # model = Sequential([
+    #     bert_model,
+    # ])
 
-    # Print confusion matrix
-    print("Confusion Matrix:")
-    print(conf_matrix)
+    # # Compile the model
+    # model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    # Optionally, you can also print a classification report
-    class_report = classification_report(train_data)
+    # # Training loop
+    # num_epochs = 5
+    #  # Specify the number of steps per epoch
+    # steps_per_epoch = len(train_data) // (32 * num_workers)
+    # print("Starting training the model")
+    # model.fit(train_dataset, epochs=num_epochs, validation_data=val_dataset, steps_per_epoch=steps_per_epoch)
+
+
+    # # Save the trained model
+    # model.save('path/to/saved_model')
+
+    # # Load the trained model for inference
+    # loaded_model = tf.keras.models.load_model('path/to/saved_model')
+
+    # # Evaluation on the test set
+    # val_predictions = loaded_model.predict(val_dataset)
+    # val_preds = tf.argmax(val_predictions, axis=1).numpy()
+
+    # # Compute confusion matrix
+    # conf_matrix = confusion_matrix(train_data['encoded_labels'][-val_size:], val_preds)
+
+    # # Print confusion matrix
+    # print("Confusion Matrix:")
+    # print(conf_matrix)
+
+    # # Optionally, you can also print a classification report
+    # class_report = classification_report(train_data)
 
