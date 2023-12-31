@@ -14,8 +14,8 @@ FROM tensorflow/tensorflow:2.3.0-gpu
 WORKDIR /app
 RUN python -m pip install --upgrade pip
 RUN pip install --upgrade pip setuptools
-RUN apt-get install -y --no-install-recommends \
-    openssh-client 
+# RUN apt-get install -y --no-install-recommends \
+#     openssh-client 
 
 # Copy the requirements.txt file to the container's working directory
 COPY requirements.txt /app/requirements.txt
