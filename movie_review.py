@@ -93,8 +93,9 @@ with strategy.scope():
     val_dataset = dataset.skip(train_size).batch(32)
 
     # Build the BERT-based model
-    config = BertConfig.from_pretrained('bert-base-uncased', num_labels=len(set(train_data['movie_names'])))
-    bert_model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
+    config = BertConfig.from_pretrained('bert-small-uncased', num_labels=len(set(train_data['movie_names'])))
+    bert_model = TFBertForSequenceClassification.from_pretrained('bert-small-uncased', config=config)
+
 
     # Create a Sequential model with BERT as the first layer
     model = Sequential([
