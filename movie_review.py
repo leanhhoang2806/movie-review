@@ -106,7 +106,8 @@ with strategy.scope():
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     # Train the model
-    model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels))
+    model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels), batch_size=16)
+
 
     # Evaluate the model on the test set
     test_loss, test_acc = model.evaluate(test_reviews, test_labels)
