@@ -74,7 +74,7 @@ with strategy.scope():
     # Assuming 'train_data' is your DataFrame
     label_encoder = LabelEncoder()
     train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
-    # Load BERT tokenizer and model
+    print("Load BERT tokenizer and model")
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     bert_model = TFBertModel.from_pretrained('bert-base-uncased')
 
@@ -95,17 +95,17 @@ with strategy.scope():
         train_reviews, train_labels, test_size=0.2, random_state=42
     )
 
-    # Build BERT-based model
+    print("Build BERT-based model")
     model = Sequential([
         bert_model,
         Flatten(),
         Dense(units=len(set(labels)), activation='softmax')  # Assuming you have n classes for movie names
     ])
 
-    # Compile the model
+    print("Compile the model")
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    # Train the model
+    print("Train the model")
     model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels), batch_size=16)
 
 
