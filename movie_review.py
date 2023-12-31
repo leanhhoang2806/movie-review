@@ -85,16 +85,14 @@ with strategy.scope():
     label_encoder = LabelEncoder()
     labels = label_encoder.fit_transform(extracted_df['movie_names'])
 
+    # Print the shapes of tokenized_reviews and labels for debugging
+    print("Tokenized Reviews Shape:", tokenized_reviews.shape)
+    print("Labels Shape:", labels.shape)
+
     # Split the dataset into training and test sets
     train_reviews, test_reviews, train_labels, test_labels = train_test_split(
         tokenized_reviews, labels, test_size=0.2, random_state=42
-    )
-
-    # Split the training set into training and validation sets
-    train_reviews, val_reviews, train_labels, val_labels = train_test_split(
-        train_reviews, train_labels, test_size=0.2, random_state=42
-    )
-
+)
     print("Build BERT-based model")
     model = Sequential([
         bert_model,
