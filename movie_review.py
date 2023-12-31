@@ -76,7 +76,7 @@ with strategy.scope():
     train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
     print("Load BERT tokenizer and model")
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    bert_model = TFBertModel.from_pretrained('bert-base-uncased')
+    bert_model = TFBertModel.from_pretrained('bert-base-uncased', from_pt=True)
 
     # Tokenize reviews
     tokenized_reviews = tokenizer(list(extracted_df['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
@@ -85,9 +85,8 @@ with strategy.scope():
     label_encoder = LabelEncoder()
     labels = label_encoder.fit_transform(extracted_df['movie_names'])
 
-    # Print the shapes of tokenized_reviews and labels for debugging
-    print("Tokenized Reviews Shape:", tokenized_reviews.shape)
-    print("Labels Shape:", labels.shape)
+    # Print the number of tokenized reviews for debugging
+    print("Number of Tokenized Reviews:", len(tokenized_reviews['input_ids']))
 
     # Split the dataset into training and test sets
     train_reviews, test_reviews, train_labels, test_labels = train_test_split(
