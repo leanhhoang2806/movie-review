@@ -65,6 +65,10 @@ with strategy.scope():
     train_tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True,
                                          return_tensors='tf', max_length=512)
 
+    # Filter out samples with inconsistent input sizes
+    indices_to_keep = [i for i, input_ids in enumerate(train_tokenized_reviews['input_ids']) if len(input_ids) == 512]
+    train_tokenized_reviews = {key: value[indices_to_keep] for key, value in train_tokenized_reviews.items()}
+
     # Convert movie names to numerical labels
     labels = label_encoder.fit_transform(train_data['movie_names'])
 
