@@ -51,10 +51,16 @@ train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_nam
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
 
-# Split the dataset into training and validation sets
-train_reviews, val_reviews, train_labels, val_labels = train_test_split(
-    tokenized_reviews['input_ids'], train_data['encoded_labels'], test_size=0.2, random_state=42
+train_indices, val_indices = train_test_split(
+    range(len(tokenized_reviews['input_ids'])), test_size=0.2, random_state=42
 )
+
+train_reviews = tokenized_reviews['input_ids'][train_indices]
+val_reviews = tokenized_reviews['input_ids'][val_indices]
+
+train_labels = train_data['encoded_labels'].iloc[train_indices]
+val_labels = train_data['encoded_labels'].iloc[val_indices]
+
 
 # Load the BERT model for sequence classification
 bert_model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased')
