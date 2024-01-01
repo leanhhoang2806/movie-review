@@ -9,6 +9,7 @@ from transformers import BertTokenizer
 from transformers import TFBertForSequenceClassification
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 
@@ -48,6 +49,9 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
 extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
+max_length = 512
+extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
+
 
 df = extracted_df[["input_ids", "movie_names"]]
 label_encoder = LabelEncoder()
