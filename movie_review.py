@@ -54,7 +54,7 @@ print(train_data['review'][:5])
 # extracted_df['input_ids'] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids'])[0])
 
 # Print the DataFrame with 'input_ids'
-print(extracted_df[['review', 'input_ids']])
+# print(extracted_df[['review', 'input_ids']])
 
 
 # import pandas as pd
