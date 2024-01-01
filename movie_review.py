@@ -39,14 +39,12 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-# Display the new DataFrame
-print(extracted_df.head())
 
 # Assuming 'train_data' is your training dataset with reviews and extracted movie names
 train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for training
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512)[0])
 
 print(extracted_df)
 # # Extract only the 'input_ids' from the 'tokenized_reviews' column
