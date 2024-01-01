@@ -54,4 +54,4 @@ extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np
 # extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
 
 # Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
-print(extracted_df[["inputs_ids", "movie_names"]].head())
+print(extracted_df.head())
