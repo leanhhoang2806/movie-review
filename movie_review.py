@@ -51,7 +51,7 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
 extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
-extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
+# extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
 
 # Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
 print(extracted_df[["inputs_ids", "movie_names"]].head())
