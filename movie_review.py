@@ -1,102 +1,69 @@
 import pandas as pd
 import re
 import string
-from sklearn.metrics import confusion_matrix, classification_report
-from transformers import BertTokenizer
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import tensorflow as tf
-from transformers import TFBertModel
+from transformers import BertTokenizer
+from transformers import TFBertForSequenceClassification
 
-# Define the number of workers
-num_workers = 2
-gpus = tf.config.experimental.list_physical_devices('GPU')
+# Load the IMDb dataset
+csv_file_path = './IMDB Dataset.csv'
+imdb_df = pd.read_csv(csv_file_path)
 
-# Initialize the distributed strategy
-strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
+# Define a regular expression pattern for extracting text between quotation marks
+movie_name_pattern = re.compile(r'"([^"]+)"')
 
-with strategy.scope():
-    csv_file_path = './IMDB Dataset.csv'
-    imdb_df = pd.read_csv(csv_file_path)
+# Initialize an empty list to store extracted data
+extracted_data = []
 
-    # Define a regular expression pattern for extracting text between quotation marks
-    movie_name_pattern = re.compile(r'"([^"]+)"')
+# Loop through each review and extract text between quotation marks
+for review in imdb_df['review']:
+    # Extract text between quotation marks using the defined pattern
+    matches = re.findall(movie_name_pattern, review)
 
-    # Initialize an empty list to store extracted data
-    extracted_data = []
+    # Filter out names that are not in capitalization format
+    valid_names = [name for name in matches if name.istitle()]
 
-    # Loop through each review and extract text between quotation marks
-    for review in imdb_df['review']:
-        # Extract text between quotation marks using the defined pattern
-        matches = re.findall(movie_name_pattern, review)
+    # Clean up punctuation at the beginning or end of each title
+    cleaned_names = [name.strip(string.punctuation) for name in valid_names]
 
-        # Filter out names that are not in capitalization format
-        valid_names = [name for name in matches if name.istitle()]
+    # Append the review and cleaned text to the list if the list is not empty
+    if cleaned_names and len(cleaned_names) == 1:
+        corrected_name = cleaned_names[0].strip()
+        if len(corrected_name) > 2:
+            extracted_data.append({'review': review, 'movie_names': corrected_name})
 
-        # Clean up punctuation at the beginning or end of each title
-        cleaned_names = [name.strip(string.punctuation) for name in valid_names]
+# Create a new DataFrame from the list of extracted data
+extracted_df = pd.DataFrame(extracted_data)
 
-        # Append the review and cleaned text to the list if the list is not empty
-        if cleaned_names and len(cleaned_names) == 1:
-            corrected_name = cleaned_names[0].strip()
-            if len(corrected_name) > 2:
-                extracted_data.append({'review': review, 'movie_names': corrected_name})
+# Display the new DataFrame
+print(extracted_df.head())
 
-    # Create a new DataFrame from the list of extracted data
-    extracted_df = pd.DataFrame(extracted_data)
+# Assuming 'train_data' is your training dataset with reviews and extracted movie names
+train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for training
 
-    # Display the new DataFrame
-    print(extracted_df.head())
+# Encode the movie names with LabelEncoder
+label_encoder = LabelEncoder()
+train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
 
-    # Assuming 'train_data' is your training dataset with reviews and extracted movie names
-    train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for training
+# Tokenize the reviews using BERT tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
 
-    # Assuming 'train_data' is your DataFrame
-    label_encoder = LabelEncoder()
-    train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_names'])
-    print("Load BERT tokenizer and model")
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    bert_model = TFBertModel.from_pretrained('bert-base-uncased', from_pt=True)
+# Split the dataset into training and validation sets
+train_reviews, val_reviews, train_labels, val_labels = train_test_split(
+    tokenized_reviews['input_ids'], train_data['encoded_labels'], test_size=0.2, random_state=42
+)
 
-    # Tokenize reviews for training set
-    train_tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True,
-                                         return_tensors='tf', max_length=512)
+# Load the BERT model for sequence classification
+bert_model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased')
 
-    # Filter out samples with inconsistent input sizes
-    indices_to_keep = [i for i, input_ids in enumerate(train_tokenized_reviews['input_ids']) if len(input_ids) == 512]
-    train_tokenized_reviews = {key: value[indices_to_keep] for key, value in train_tokenized_reviews.items()}
+# Compile the model
+bert_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-    # Convert movie names to numerical labels
-    labels = label_encoder.fit_transform(train_data['movie_names'])
+# Train the model
+bert_model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels), batch_size=16)
 
-    # Split the dataset into training and test sets
-    train_reviews, test_reviews, train_labels, test_labels = train_test_split(
-        train_tokenized_reviews, labels, test_size=0.2, random_state=42
-    )
-
-    # Further split the training set into training and validation sets
-    train_reviews, val_reviews, train_labels, val_labels = train_test_split(
-        train_reviews, train_labels, test_size=0.1, random_state=42
-    )
-    print("Build BERT-based model")
-    model = Sequential([
-        bert_model,
-        Flatten(),
-        Dense(units=len(set(labels)), activation='softmax')  # Assuming you have n classes for movie names
-    ])
-
-    print("Compile the model")
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-    print("Train the model")
-    model.fit(train_reviews, train_labels, epochs=5, validation_data=(val_reviews, val_labels), batch_size=16)
-
-    # Evaluate the model on the test set
-    test_loss, test_acc = model.evaluate(test_reviews, test_labels)
-    print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
-
-    # Save the model for later use
-    model.save('movie_name_extraction_model')
+# Save the trained model
+bert_model.save('movie_name_extraction_model')
