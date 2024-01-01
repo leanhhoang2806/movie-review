@@ -3,9 +3,12 @@ import re
 import string
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
+from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelEncoder
 from transformers import BertTokenizer
 from transformers import TFBertForSequenceClassification
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
 import numpy as np
 
 
@@ -49,31 +52,27 @@ extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np
 df = extracted_df[["input_ids", "movie_names"]]
 label_encoder = LabelEncoder()
 extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
-
-print(extracted_df[["input_ids", "movie_names"]].head())
-# # Extract only the 'input_ids' from the 'tokenized_reviews' column
-# extracted_df['input_ids'] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids'])[0])
-
-# Print the DataFrame with 'input_ids'
-# print(extracted_df[['review', 'input_ids']])
+# Shuffle the DataFrame
+extracted_df = shuffle(extracted_df, random_state=42)
+# Split the DataFrame into training and testing sets
+train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
 
-# import pandas as pd
-# from transformers import BertTokenizer
-# import numpy as np
+# Define the neural network model
+model = Sequential([
+    Flatten(input_shape=(512,)),  # Assuming input_ids have max_length=512
+    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
+])
 
-# # Load the pre-trained BERT tokenizer
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Compile the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-# # Example DataFrame
-# data = {'review': ['This is the first review.', 'Another example review.', 'And one more review.']}
-# df = pd.DataFrame(data)
+# Train the model
+model.fit(np.vstack(train_df['input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
 
-# # Tokenize the entire "review" column
-# df['tokenized_reviews'] = df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+# Evaluate the model on the test set
+test_loss, test_acc = model.evaluate(np.vstack(test_df['input_ids']), test_df['encoded_labels'])
+print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
 
-# # Convert the 'input_ids' tensor to a NumPy array
-# df['input_ids'] = df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
-
-# # Print the DataFrame with 'input_ids'
-# print(df[['review', 'input_ids']])
+# Save the model for later use
+model.save('movie_name_prediction_model')
