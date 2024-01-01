@@ -11,6 +11,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
+from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
+
 
 
 # Load the IMDb dataset
@@ -62,25 +64,31 @@ extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie
 # Shuffle the DataFrame
 extracted_df = shuffle(extracted_df, random_state=42)
 
-# Split the DataFrame into training and testing sets
-train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
+train_data, test_data = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
-# Define the neural network model
-model = Sequential([
-    tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
-    Flatten(),
-    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
-])
+# Load DistilBERT tokenizer and model
+tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
+model = TFDistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased')
 
-# Compile the model
+# Tokenize the input text
+train_encodings = tokenizer(train_data['review'].tolist(), padding=True, truncation=True, return_tensors='tf')
+test_encodings = tokenizer(test_data['review'].tolist(), padding=True, truncation=True, return_tensors='tf')
+
+# Create TensorFlow datasets
+train_dataset = tf.data.Dataset.from_tensor_slices((
+    dict(train_encodings),
+    train_data['movie_names']
+))
+
+test_dataset = tf.data.Dataset.from_tensor_slices((
+    dict(test_encodings),
+    test_data['movie_names']
+))
+
+# Compile and train the model
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+model.fit(train_dataset.shuffle(1000).batch(16), epochs=5, validation_data=test_dataset.shuffle(1000).batch(16))
 
-# Train the model
-model.fit(np.vstack(train_df['padded_input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
-
-# Evaluate the model on the test set
-test_loss, test_acc = model.evaluate(np.vstack(test_df['padded_input_ids']), test_df['encoded_labels'])
+# Evaluate the model
+test_loss, test_acc = model.evaluate(test_dataset.batch(16))
 print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
-
-# Save the model for later use
-model.save('movie_name_prediction_model')
