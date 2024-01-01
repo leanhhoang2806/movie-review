@@ -46,8 +46,9 @@ print(extracted_df.head())
 train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for training
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
+print(train_data['review'][:5])
 # Tokenize the entire "review" column
-extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+# extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
 
 # # Extract only the 'input_ids' from the 'tokenized_reviews' column
 # extracted_df['input_ids'] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids'])[0])
