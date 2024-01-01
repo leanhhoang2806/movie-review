@@ -41,11 +41,15 @@ extracted_df = pd.DataFrame(extracted_data)
 
 
 # Assuming 'train_data' is your training dataset with reviews and extracted movie names
-train_data = extracted_df.sample(frac=0.8, random_state=42)  # Use 80% for training
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
 extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
+
+df = extracted_df[["input_ids", "movie_names"]]
+label_encoder = LabelEncoder()
+extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
+
 print(extracted_df[["input_ids", "movie_names"]].head())
 # # Extract only the 'input_ids' from the 'tokenized_reviews' column
 # extracted_df['input_ids'] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids'])[0])
