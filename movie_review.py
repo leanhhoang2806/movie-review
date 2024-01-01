@@ -11,7 +11,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
-from transformers import DistilBertTokenizer, TFDistilBertForSequenceClassification
+from transformers import DistilBertTokenizer, TFDistilBertForTokenClassification
 
 
 
@@ -66,29 +66,23 @@ extracted_df = shuffle(extracted_df, random_state=42)
 
 train_data, test_data = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
-# Load DistilBERT tokenizer and model
 tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-model = TFDistilBertForSequenceClassification.from_pretrained('distilbert-base-uncased')
+model = TFDistilBertForTokenClassification.from_pretrained('distilbert-base-uncased', num_labels=2)
 
-# Tokenize the input text
-train_encodings = tokenizer(train_data['review'].tolist(), padding=True, truncation=True, return_tensors='tf')
-test_encodings = tokenizer(test_data['review'].tolist(), padding=True, truncation=True, return_tensors='tf')
+# Tokenize and prepare input
+encodings = tokenizer(extracted_df['review'].tolist(), padding=True, truncation=True, return_tensors='tf', max_length=512)
+labels = tokenizer(extracted_df['movie_names'].tolist(), padding=True, truncation=True, return_tensors='tf', max_length=512)['input_ids']
 
-# Create TensorFlow datasets
-train_dataset = tf.data.Dataset.from_tensor_slices((
-    dict(train_encodings),
-    train_data['movie_names']
-))
-
-test_dataset = tf.data.Dataset.from_tensor_slices((
-    dict(test_encodings),
-    test_data['movie_names']
+# Prepare TensorFlow datasets
+dataset = tf.data.Dataset.from_tensor_slices((
+    dict(encodings),
+    labels
 ))
 
 # Compile and train the model
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(train_dataset.shuffle(1000).batch(16), epochs=5, validation_data=test_dataset.shuffle(1000).batch(16))
+model.fit(dataset.shuffle(1000).batch(16), epochs=5)
 
-# Evaluate the model
-test_loss, test_acc = model.evaluate(test_dataset.batch(16))
+# Evaluate the model on a test set (replace test_dataset with your test set)
+test_loss, test_acc = model.evaluate(test_data.batch(16))
 print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
