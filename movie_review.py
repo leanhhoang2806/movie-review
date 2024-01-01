@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from transformers import BertTokenizer
 from transformers import TFBertForSequenceClassification
+import numpy as np
+
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -51,12 +53,25 @@ train_data['encoded_labels'] = label_encoder.fit_transform(train_data['movie_nam
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 tokenized_reviews = tokenizer(list(train_data['review']), padding=True, truncation=True, return_tensors='tf', max_length=512)
 
+# Create integer indices using range
 train_indices, val_indices = train_test_split(
     range(len(tokenized_reviews['input_ids'])), test_size=0.2, random_state=42
 )
 
-train_reviews = tokenized_reviews['input_ids'][train_indices]
-val_reviews = tokenized_reviews['input_ids'][val_indices]
+# Convert the indices to NumPy arrays to avoid potential overflow issues
+train_indices = np.array(train_indices)
+val_indices = np.array(val_indices)
+
+# Use NumPy indexing to extract the data
+train_reviews = {
+    'input_ids': tokenized_reviews['input_ids'][train_indices],
+    # Include other tokenized_review fields as needed
+}
+
+val_reviews = {
+    'input_ids': tokenized_reviews['input_ids'][val_indices],
+    # Include other tokenized_review fields as needed
+}
 
 train_labels = train_data['encoded_labels'].iloc[train_indices]
 val_labels = train_data['encoded_labels'].iloc[val_indices]
