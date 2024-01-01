@@ -54,35 +54,4 @@ extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np
 extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
 
 # Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
-max_length = 512
-extracted_df['padded_input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
-
-# Encode movie names using LabelEncoder
-label_encoder = LabelEncoder()
-extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
-
-# Shuffle the DataFrame
-extracted_df = shuffle(extracted_df, random_state=42)
-
-train_data, test_data = train_test_split(extracted_df, test_size=0.2, random_state=42)
-
-tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-model = TFDistilBertForTokenClassification.from_pretrained('distilbert-base-uncased', num_labels=2)
-
-# Tokenize and prepare input
-encodings = tokenizer(extracted_df['review'].tolist(), padding=True, truncation=True, return_tensors='tf', max_length=512)
-labels = tokenizer(extracted_df['movie_names'].tolist(), padding=True, truncation=True, return_tensors='tf', max_length=512)['input_ids']
-
-# Prepare TensorFlow datasets
-dataset = tf.data.Dataset.from_tensor_slices((
-    dict(encodings),
-    labels
-))
-
-# Compile and train the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-model.fit(dataset.shuffle(1000).batch(16), epochs=5)
-
-# Evaluate the model on a test set (replace test_dataset with your test set)
-test_loss, test_acc = model.evaluate(test_data.batch(16))
-print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+print(extracted_data[["inputs_ids", "movie_names"]])
