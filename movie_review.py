@@ -68,12 +68,11 @@ extracted_df = shuffle(extracted_df, random_state=42)
 train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
 
-bert_model = TFBertModel.from_pretrained('bert-base-uncased')
-# Define and compile BERT-based model
-model = tf.keras.Sequential([
-    bert_model,
-    # tf.keras.layers.Flatten(),  # You can modify this part based on your specific requirements
-    tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
+# Define the neural network model
+model = Sequential([
+    tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
+    Flatten(),
+    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
 ])
 
 # Compile the model
