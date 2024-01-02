@@ -56,9 +56,9 @@ print("Load pre-trained BERT tokenizer and model")
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
 
-print("Set up GPU support if available")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+# print("Set up GPU support if available")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# model.to(device)
 
 print("Encode the reviews and movie names")
 tokenized_reviews = df['review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True, truncation=True, max_length=128))
