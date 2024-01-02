@@ -89,7 +89,7 @@ def encode_data(df, tokenizer, max_length=512):
 
     return tokenized_reviews, token_labels
 
-tokenized_reviews, token_labels = encode_data(df, tokenizer)
+tokenized_reviews, token_labels = encode_data(extracted_df, tokenizer)
 
 # Prepare training data
 train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
