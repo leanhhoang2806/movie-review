@@ -57,7 +57,6 @@ from transformers import BertTokenizer, pipeline
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english')
 model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9)
 
-# Tokenize and encode the DataFrame
 def encode_data(df, tokenizer, max_length=512):
     tokenized_reviews = []
     token_labels = []
@@ -67,24 +66,19 @@ def encode_data(df, tokenizer, max_length=512):
         movie_names = [row['movie_names']]
 
         # Tokenize the text
-        tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review, max_length=max_length, truncation=True)))
-
-        # Truncate or split sequences longer than the model's maximum length
-        tokens = tokens[:max_length - 2]  # Account for [CLS] and [SEP] tokens
-        labels = [0] * len(tokens)  # Initialize labels with 'O' (Outside entity) index
+        encoding = tokenizer(review, max_length=max_length, truncation=True, return_tensors='pt', padding='max_length')
 
         # Convert extracted entities to token-level labels
+        labels = [0] * max_length  # Initialize labels with 'O' (Outside entity) index
         for entity in movie_names:
             entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
-            try:
-                start_idx = tokens.index(entity_tokens[0])
-                end_idx = start_idx + len(entity_tokens)
-                labels[start_idx:end_idx] = [1] + [2] * (len(entity_tokens) - 1)  # Use numerical indices for 'B-PER' and 'I-PER'
-            except ValueError:
-                # Handle the case where the entity is not found in the tokens
-                pass
+            for i in range(len(encoding['input_ids'][0])):
+                if encoding['input_ids'][0][i].item() == tokenizer.encode(entity_tokens[0])[0]:
+                    labels[i] = 1  # 'B-PER' label
+                    for j in range(1, len(entity_tokens)):
+                        labels[i + j] = 2  # 'I-PER' label
 
-        tokenized_reviews.append(tokens)
+        tokenized_reviews.append(encoding)
         token_labels.append(labels)
 
     return tokenized_reviews, token_labels
@@ -98,17 +92,13 @@ train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_
 train_labels = torch.tensor(train_labels)
 val_labels = torch.tensor(val_labels)
 
-# Tokenize and encode the training data
-train_encodings = tokenizer(train_tokens, padding=True, return_tensors='pt', truncation=True)
-val_encodings = tokenizer(val_tokens, padding=True, return_tensors='pt', truncation=True)
-
 # Set up optimizer and training parameters
 optimizer = AdamW(model.parameters(), lr=1e-5)
 
 # Fine-tune BERT for named entity recognition
 num_epochs = 3
 for epoch in range(num_epochs):
-    outputs = model(**train_encodings, labels=train_labels)
+    outputs = model(**train_tokens[0], labels=train_labels)
     loss = outputs.loss
 
     loss.backward()
