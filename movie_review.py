@@ -71,7 +71,7 @@ def encode_data(df, tokenizer, max_length=512):
 
         # Truncate or split sequences longer than the model's maximum length
         tokens = tokens[:max_length - 2]  # Account for [CLS] and [SEP] tokens
-        labels = ['O'] * len(tokens)
+        labels = [0] * len(tokens)  # Initialize labels with 'O' (Outside entity) index
 
         # Convert extracted entities to token-level labels
         for entity in movie_names:
@@ -79,7 +79,7 @@ def encode_data(df, tokenizer, max_length=512):
             try:
                 start_idx = tokens.index(entity_tokens[0])
                 end_idx = start_idx + len(entity_tokens)
-                labels[start_idx:end_idx] = ['B-PER'] + ['I-PER'] * (len(entity_tokens) - 1)
+                labels[start_idx:end_idx] = [1] + [2] * (len(entity_tokens) - 1)  # Use numerical indices for 'B-PER' and 'I-PER'
             except ValueError:
                 # Handle the case where the entity is not found in the tokens
                 pass
@@ -89,7 +89,7 @@ def encode_data(df, tokenizer, max_length=512):
 
     return tokenized_reviews, token_labels
 
-tokenized_reviews, token_labels = encode_data(extracted_df, tokenizer)
+tokenized_reviews, token_labels = encode_data(df, tokenizer)
 
 # Prepare training data
 train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
