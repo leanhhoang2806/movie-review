@@ -45,23 +45,17 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-# Load pre-trained BERT tokenizer and model
+
+# Assuming 'train_data' is your training dataset with reviews and extracted movie names
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-bert_model = TFBertModel.from_pretrained('bert-base-uncased')
 
-# Tokenize and pad the input sequences
+extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
+extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
+
+# Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
 max_length = 512
-input_ids = []
-attention_masks = []
-
-for review in extracted_df['review']:
-    inputs = tokenizer(review, padding=True, truncation=True, return_tensors='tf', max_length=max_length)
-    input_ids.append(tf.constant(inputs['input_ids'][0]))
-    attention_masks.append(tf.constant(inputs['attention_mask'][0]))
-
-# Convert lists to numpy arrays
-input_ids = np.array(input_ids)
-attention_masks = np.array(attention_masks)
+extracted_df['padded_input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
 
 # Encode movie names using LabelEncoder
 label_encoder = LabelEncoder()
@@ -73,28 +67,26 @@ extracted_df = shuffle(extracted_df, random_state=42)
 # Split the DataFrame into training and testing sets
 train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
-# Build the BERT-based model
-input_ids_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="input_ids")
-attention_mask_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="attention_mask")
 
-# Get BERT output
-bert_output = bert_model([input_ids_input, attention_mask_input])[0]  # Updated to [0] for last layer output
+# Define the neural network model
+model = Sequential([
+    tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
+    Flatten(),
+    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
+])
 
-# Pooling layer to reduce dimensionality
-pooled_output = tf.keras.layers.GlobalAveragePooling1D()(bert_output)
-
-# Dense layer for classification
-output = tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')(pooled_output)
-
-# Build and compile the model
-model = tf.keras.Model(inputs=[input_ids_input, attention_mask_input], outputs=output)
+# Compile the model
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model
-model.fit([input_ids, attention_masks], train_df['encoded_labels'], epochs=5, batch_size=16)
+model.fit(np.vstack(train_df['padded_input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
 
+# Evaluate the model on the test set
+test_loss, test_acc = model.evaluate(np.vstack(test_df['padded_input_ids']), test_df['encoded_labels'])
+print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
 
-
+# Save the model for later use
+model.save('movie_name_prediction_model')
 
 # ==== testing =====
 
