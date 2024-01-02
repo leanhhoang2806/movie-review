@@ -11,6 +11,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
+from tensorflow.keras.models import load_model
 
 
 # Load the IMDb dataset
@@ -84,3 +85,25 @@ print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
 
 # Save the model for later use
 model.save('movie_name_prediction_model')
+
+# ==== testing =====
+
+# Load the saved model
+loaded_model = load_model('movie_name_prediction_model')
+# Assuming 'imdb_df' is your original IMDb dataset
+tokenized_reviews = imdb_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+input_ids = tokenized_reviews.apply(lambda x: np.array(x['input_ids']))
+input_ids = input_ids.apply(lambda x: np.array(x[0]))
+padded_input_ids = input_ids.apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
+
+# Predict movie names
+predictions = loaded_model.predict(np.vstack(padded_input_ids))
+
+# Decode predictions using LabelEncoder
+decoded_predictions = label_encoder.inverse_transform(np.argmax(predictions, axis=1))
+
+# Add predictions to the original DataFrame
+imdb_df['predicted_movie_names'] = decoded_predictions
+
+# Display the DataFrame with predictions
+print(imdb_df[['review', 'predicted_movie_names']])
