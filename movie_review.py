@@ -46,6 +46,7 @@ for review in imdb_df['review']:
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
+df = extracted_df
 
 
 # Install the transformers library if you haven't already
