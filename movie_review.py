@@ -104,12 +104,16 @@ optimizer = AdamW(model.parameters(), lr=1e-5)
 # Fine-tune BERT for named entity recognition
 num_epochs = 3
 for epoch in range(num_epochs):
-    outputs = model(**train_tokens[0], labels=train_labels)
-    loss = outputs.loss
+    for tokens, labels in zip(train_tokens, train_labels):
+        # Ensure proper structure for input tokens
+        tokens = {key: tokens[key].squeeze(0) for key in tokens}
+        
+        outputs = model(**tokens, labels=labels.unsqueeze(0))
+        loss = outputs.loss
 
-    loss.backward()
-    optimizer.step()
-    optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
 
 # Save or use the fine-tuned model for named entity recognition
 model.save_pretrained('./fine_tuned_bert_ner_model')
