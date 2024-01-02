@@ -60,14 +60,14 @@ model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labe
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
-# Encode the reviews and movie names
+print("Encode the reviews and movie names")
 tokenized_reviews = df['review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True, truncation=True, max_length=128))
 labels = df['movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
 
-# Split the dataset into training and validation sets
+print("Split the dataset into training and validation sets")
 train_inputs, val_inputs, train_labels, val_labels = train_test_split(tokenized_reviews, labels, test_size=0.2, random_state=42)
 
-# Convert data to PyTorch tensors and move to GPU
+print("Convert data to PyTorch tensors and move to GPU")
 train_inputs = torch.tensor(train_inputs).to(device)
 val_inputs = torch.tensor(val_inputs).to(device)
 train_labels = torch.tensor(train_labels).to(device)
@@ -75,12 +75,12 @@ val_labels = torch.tensor(val_labels).to(device)
 
 # Create DataLoader for training and validation sets
 train_data = TensorDataset(train_inputs, train_labels)
-train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True)
+train_dataloader = DataLoader(train_data, batch_size=2, shuffle=True)
 
 val_data = TensorDataset(val_inputs, val_labels)
-val_dataloader = DataLoader(val_data, batch_size=4, shuffle=False)
+val_dataloader = DataLoader(val_data, batch_size=2, shuffle=False)
 
-# Fine-tune the BERT model
+print("Fine-tune the BERT model")
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
 
 for epoch in range(3):  # Adjust the number of epochs as needed
