@@ -94,6 +94,10 @@ train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_
 train_labels = torch.stack(train_labels)
 val_labels = torch.stack(val_labels)
 
+# Truncate the tensor if necessary to match the model's maximum length
+max_length = min(val_labels.shape[1], 512)
+val_labels = val_labels[:, :max_length]
+
 # Set up optimizer and training parameters
 optimizer = AdamW(model.parameters(), lr=1e-5)
 
