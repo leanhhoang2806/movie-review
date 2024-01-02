@@ -58,6 +58,7 @@ from transformers import BertTokenizer, pipeline
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english')
 model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9)
 
+# Tokenize and encode the DataFrame
 def encode_data(df, tokenizer, max_length=512):
     tokenized_reviews = []
     token_labels = []
@@ -70,7 +71,7 @@ def encode_data(df, tokenizer, max_length=512):
         encoding = tokenizer(review, max_length=max_length, truncation=True, return_tensors='pt', padding='max_length')
 
         # Convert extracted entities to token-level labels
-        labels = [0] * max_length  # Initialize labels with 'O' (Outside entity) index
+        labels = torch.zeros(max_length, dtype=torch.long)  # Initialize labels with 'O' (Outside entity) index
         for entity in movie_names:
             entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
             for i in range(len(encoding['input_ids'][0])):
@@ -90,8 +91,8 @@ tokenized_reviews, token_labels = encode_data(df, tokenizer)
 train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
 
 # Convert labels to tensors
-train_labels = torch.tensor(train_labels)
-val_labels = torch.tensor(val_labels)
+train_labels = torch.stack(train_labels)
+val_labels = torch.stack(val_labels)
 
 # Set up optimizer and training parameters
 optimizer = AdamW(model.parameters(), lr=1e-5)
