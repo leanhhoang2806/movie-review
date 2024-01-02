@@ -47,16 +47,17 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 df = extracted_df
+cache_dir = "./"
 
+# Load pre-trained BERT NER model and tokenizer with caching
+tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', cache_dir=cache_dir)
+model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9, cache_dir=cache_dir)
 
-# Install the transformers library if you haven't already
-# pip install transformers
+# Your existing code...
+# (Tokenization, Encoding, Training loop, Inference)
 
-from transformers import BertTokenizer, pipeline
-
-# Load pre-trained BERT NER model and tokenizer
-tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english')
-model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9)
+# Save or use the fine-tuned model for named entity recognition
+model.save_pretrained('./fine_tuned_bert_ner_model')
 
 # Tokenize and encode the DataFrame
 def encode_data(df, tokenizer, max_length=512):
