@@ -12,6 +12,7 @@ from tensorflow.keras.layers import Dense, Flatten
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from tensorflow.keras.models import load_model
+from transformers import TFBertModel
 
 
 # Load the IMDb dataset
@@ -66,11 +67,13 @@ extracted_df = shuffle(extracted_df, random_state=42)
 # Split the DataFrame into training and testing sets
 train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
 
-# Define the neural network model
-model = Sequential([
-    tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
-    Flatten(),
-    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
+
+bert_model = TFBertModel.from_pretrained('bert-base-uncased')
+# Define and compile BERT-based model
+model = tf.keras.Sequential([
+    bert_model,
+    tf.keras.layers.Flatten(),  # You can modify this part based on your specific requirements
+    tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
 ])
 
 # Compile the model
@@ -88,22 +91,15 @@ model.save('movie_name_prediction_model')
 
 # ==== testing =====
 
-# Load the saved model
-loaded_model = load_model('movie_name_prediction_model')
-# Assuming 'imdb_df' is your original IMDb dataset
-tokenized_reviews = imdb_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
-input_ids = tokenized_reviews.apply(lambda x: np.array(x['input_ids']))
-input_ids = input_ids.apply(lambda x: np.array(x[0]))
-padded_input_ids = input_ids.apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
+# loaded_model = load_model('movie_name_prediction_model')
+# tokenized_reviews = imdb_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+# input_ids = tokenized_reviews.apply(lambda x: np.array(x['input_ids']))
+# input_ids = input_ids.apply(lambda x: np.array(x[0]))
+# padded_input_ids = input_ids.apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
 
-# Predict movie names
-predictions = loaded_model.predict(np.vstack(padded_input_ids))
+# predictions = loaded_model.predict(np.vstack(padded_input_ids))
 
-# Decode predictions using LabelEncoder
-decoded_predictions = label_encoder.inverse_transform(np.argmax(predictions, axis=1))
+# decoded_predictions = label_encoder.inverse_transform(np.argmax(predictions, axis=1))
 
-# Add predictions to the original DataFrame
-imdb_df['predicted_movie_names'] = decoded_predictions
-
-# Display the DataFrame with predictions
-print(imdb_df[['review', 'predicted_movie_names']])
+# imdb_df['predicted_movie_names'] = decoded_predictions
+# print(imdb_df[['review', 'predicted_movie_names']])
