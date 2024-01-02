@@ -15,11 +15,13 @@ from tensorflow.keras.models import load_model
 from transformers import TFBertModel
 from transformers import AdamW
 import torch
+import os
 
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
 imdb_df = pd.read_csv(csv_file_path)
+os.environ["TRANSFORMERS_CACHE"] = "./"
 
 # Define a regular expression pattern for extracting text between quotation marks
 movie_name_pattern = re.compile(r'"([^"]+)"')
@@ -108,14 +110,17 @@ for epoch in range(num_epochs):
     for tokens, labels in zip(train_tokens, train_labels):
         # Ensure proper structure for input tokens
         tokens = {key: tokens[key].squeeze(0) for key in tokens}
-        
+
         # Add batch dimension to labels tensor
         labels = labels.unsqueeze(0)
 
         # Flatten the labels tensor to match the model's expectations
         labels = labels.view(-1)
         
-        outputs = model(**tokens, labels=labels)
+        # Make sure tokens are on the same device as the model
+        tokens = {key: value.to(model.device) for key, value in tokens.items()}
+
+        outputs = model(**tokens, labels=labels.unsqueeze(0))
         loss = outputs.loss
 
         loss.backward()
