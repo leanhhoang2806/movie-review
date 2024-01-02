@@ -56,8 +56,8 @@ attention_masks = []
 
 for review in extracted_df['review']:
     inputs = tokenizer(review, padding=True, truncation=True, return_tensors='tf', max_length=max_length)
-    input_ids.append(tf.convert_to_tensor(inputs['input_ids'][0]))
-    attention_masks.append(tf.convert_to_tensor(inputs['attention_mask'][0]))
+    input_ids.append(tf.constant(inputs['input_ids'][0]))
+    attention_masks.append(tf.constant(inputs['attention_mask'][0]))
 
 # Convert lists to numpy arrays
 input_ids = np.array(input_ids)
