@@ -46,47 +46,81 @@ for review in imdb_df['review']:
 extracted_df = pd.DataFrame(extracted_data)
 
 
-# Assuming 'train_data' is your training dataset with reviews and extracted movie names
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Install the transformers library if you haven't already
+# pip install transformers
 
-extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
-extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
-extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
+from transformers import BertTokenizer, pipeline
 
-# Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
-max_length = 512
-extracted_df['padded_input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
+# Load pre-trained BERT NER model and tokenizer
+tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english')
 
-# Encode movie names using LabelEncoder
-label_encoder = LabelEncoder()
-extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
+# Example text and extracted entities
+text = "Great movie starring Tom Hanks. I didn't like the performance of Brad Pitt."
+entities = ["Tom Hanks", "Brad Pitt"]
 
-# Shuffle the DataFrame
-extracted_df = shuffle(extracted_df, random_state=42)
+# Tokenize the text
+tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text)))
 
-# Split the DataFrame into training and testing sets
-train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
+# Initialize labels with 'O' (Outside entity) for each token
+labels = ['O'] * len(tokens)
+
+# Convert extracted entities to token-level labels
+for entity in entities:
+    entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
+    try:
+        start_idx = tokens.index(entity_tokens[0])
+        end_idx = start_idx + len(entity_tokens)
+        labels[start_idx:end_idx] = ['B-PER'] + ['I-PER'] * (len(entity_tokens) - 1)
+    except ValueError:
+        # Handle the case where the entity is not found in the tokens
+        pass
+
+print(labels)
 
 
-# Define the neural network model
-model = Sequential([
-    tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
-    Flatten(),
-    Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
-])
+# ======== Working version, do not touch ===========
 
-# Compile the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+# # Assuming 'train_data' is your training dataset with reviews and extracted movie names
+# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-# Train the model
-model.fit(np.vstack(train_df['padded_input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
+# extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
+# extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
+# extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
 
-# Evaluate the model on the test set
-test_loss, test_acc = model.evaluate(np.vstack(test_df['padded_input_ids']), test_df['encoded_labels'])
-print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+# # Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
+# max_length = 512
+# extracted_df['padded_input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
 
-# Save the model for later use
-model.save('movie_name_prediction_model')
+# # Encode movie names using LabelEncoder
+# label_encoder = LabelEncoder()
+# extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
+
+# # Shuffle the DataFrame
+# extracted_df = shuffle(extracted_df, random_state=42)
+
+# # Split the DataFrame into training and testing sets
+# train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
+
+
+# # Define the neural network model
+# model = Sequential([
+#     tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
+#     Flatten(),
+#     Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
+# ])
+
+# # Compile the model
+# model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# # Train the model
+# model.fit(np.vstack(train_df['padded_input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
+
+# # Evaluate the model on the test set
+# test_loss, test_acc = model.evaluate(np.vstack(test_df['padded_input_ids']), test_df['encoded_labels'])
+# print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
+
+# # Save the model for later use
+# model.save('movie_name_prediction_model')
 
 # ==== testing =====
 
