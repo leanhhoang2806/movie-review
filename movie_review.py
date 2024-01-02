@@ -49,7 +49,7 @@ for review in imdb_df['review']:
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
-print(extracted_data.head())
+print(extracted_df.head())
 df = extracted_df
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
