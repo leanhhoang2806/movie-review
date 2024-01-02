@@ -48,99 +48,64 @@ for review in imdb_df['review']:
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
-df = extracted_df
-cache_dir = "./"
 
-# Load pre-trained BERT NER model and tokenizer with caching
-tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', cache_dir=cache_dir)
-model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9, cache_dir=cache_dir)
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
 
-# Your existing code...
-# (Tokenization, Encoding, Training loop, Inference)
+# Encode the reviews and movie names
+tokenized_reviews = df['Review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True))
+labels = df['Movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
 
-# Save or use the fine-tuned model for named entity recognition
-model.save_pretrained('./fine_tuned_bert_ner_model')
+# Split the dataset into training and validation sets
+train_inputs, val_inputs, train_labels, val_labels = train_test_split(tokenized_reviews, labels, test_size=0.2, random_state=42)
 
-# Tokenize and encode the DataFrame
-def encode_data(df, tokenizer, max_length=512):
-    tokenized_reviews = []
-    token_labels = []
+# Convert data to PyTorch tensors
+train_inputs = torch.tensor(train_inputs)
+val_inputs = torch.tensor(val_inputs)
+train_labels = torch.tensor(train_labels)
+val_labels = torch.tensor(val_labels)
 
-    for _, row in df.iterrows():
-        review = row['review']
-        movie_names = [row['movie_names']]
+# Create DataLoader for training and validation sets
+train_data = TensorDataset(train_inputs, train_labels)
+train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True)
 
-        # Tokenize the text
-        encoding = tokenizer(review, max_length=max_length, truncation=True, return_tensors='pt', padding='max_length')
+val_data = TensorDataset(val_inputs, val_labels)
+val_dataloader = DataLoader(val_data, batch_size=4, shuffle=False)
 
-        # Convert extracted entities to token-level labels
-        labels = torch.zeros(max_length, dtype=torch.long)  # Initialize labels with 'O' (Outside entity) index
-        for entity in movie_names:
-            entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
-            for i in range(len(encoding['input_ids'][0])):
-                if encoding['input_ids'][0][i].item() == tokenizer.encode(entity_tokens[0])[0]:
-                    labels[i] = 1  # 'B-PER' label
-                    for j in range(1, len(entity_tokens)):
-                        labels[i + j] = 2  # 'I-PER' label
+# Fine-tune the BERT model
+optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
 
-        tokenized_reviews.append(encoding)
-        token_labels.append(labels)
+for epoch in range(3):  # Adjust the number of epochs as needed
+    model.train()
+    total_loss = 0
 
-    return tokenized_reviews, token_labels
+    for batch in train_dataloader:
+        inputs, labels = batch
+        optimizer.zero_grad()
 
-tokenized_reviews, token_labels = encode_data(df, tokenizer)
-
-# Prepare training data
-train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
-
-# Convert labels to tensors
-train_labels = torch.stack(train_labels)
-val_labels = torch.stack(val_labels)
-
-# Truncate the tensor if necessary to match the model's maximum length
-max_length = min(val_labels.shape[1], 512)
-val_labels = val_labels[:, :max_length]
-
-# Set up optimizer and training parameters
-optimizer = AdamW(model.parameters(), lr=1e-5)
-
-# Fine-tune BERT for named entity recognition
-num_epochs = 3
-for epoch in range(num_epochs):
-    for tokens, labels in zip(train_tokens, train_labels):
-        # Ensure proper structure for input tokens
-        tokens = {key: tokens[key].squeeze(0) for key in tokens}
-
-        # Add batch dimension to labels tensor
-        labels = labels.unsqueeze(0)
-
-        # Flatten the labels tensor to match the model's expectations
-        labels = labels.view(-1)
-        
-        # Make sure tokens are on the same device as the model
-        tokens = {key: value.to(model.device) for key, value in tokens.items()}
-
-        outputs = model(**tokens, labels=labels.unsqueeze(0))
+        outputs = model(inputs, labels=labels)
         loss = outputs.loss
+        total_loss += loss.item()
 
         loss.backward()
         optimizer.step()
-        optimizer.zero_grad()
 
-# Save or use the fine-tuned model for named entity recognition
-model.save_pretrained('./fine_tuned_bert_ner_model')
+    avg_loss = total_loss / len(train_dataloader)
+    print(f"Epoch {epoch+1}, Average Loss: {avg_loss}")
 
-# Example of using the fine-tuned model for inference
-def extract_movie_names(review, model, tokenizer, max_length=512):
-    tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review, max_length=max_length, truncation=True)))
-    labels = model(**tokenizer(review, padding=True, return_tensors='pt', truncation=True), labels=None).logits.argmax(dim=2)
-    movie_names = [tokens[i] for i in range(min(len(tokens), max_length)) if labels[0][i].item() in [5, 6, 7, 8]]  # Extract tokens labeled as 'B-PER' or 'I-PER'
-    return tokenizer.decode(tokenizer.convert_tokens_to_ids(movie_names))
+# Evaluate the model on the validation set
+model.eval()
+with torch.no_grad():
+    val_loss = 0
+    for batch in val_dataloader:
+        inputs, labels = batch
+        outputs = model(inputs, labels=labels)
+        val_loss += outputs.loss.item()
 
-# Example usage
-sample_review = "I watched a great movie starring Tom Hanks yesterday."
-predicted_movie_names = extract_movie_names(sample_review, model, tokenizer)
-print(f"Predicted Movie Names: {predicted_movie_names}")
+    avg_val_loss = val_loss / len(val_dataloader)
+    print(f"Validation Loss: {avg_val_loss}")
+
+
 
 # ======== Working version, do not touch ===========
 
