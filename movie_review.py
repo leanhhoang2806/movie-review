@@ -122,7 +122,7 @@ model.save_pretrained('./fine_tuned_bert_ner_model')
 # Example of using the fine-tuned model for inference
 def extract_movie_names(review, model, tokenizer, max_length=512):
     tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review, max_length=max_length, truncation=True)))
-    labels = model(**tokenizer(review, padding=True, return_tensors='pt', truncation=True)).logits.argmax(dim=2)
+    labels = model(**tokenizer(review, padding=True, return_tensors='pt', truncation=True), labels=None).logits.argmax(dim=2)
     movie_names = [tokens[i] for i in range(min(len(tokens), max_length)) if labels[0][i].item() in [5, 6, 7, 8]]  # Extract tokens labeled as 'B-PER' or 'I-PER'
     return tokenizer.decode(tokenizer.convert_tokens_to_ids(movie_names))
 
@@ -130,7 +130,6 @@ def extract_movie_names(review, model, tokenizer, max_length=512):
 sample_review = "I watched a great movie starring Tom Hanks yesterday."
 predicted_movie_names = extract_movie_names(sample_review, model, tokenizer)
 print(f"Predicted Movie Names: {predicted_movie_names}")
-
 
 # ======== Working version, do not touch ===========
 
