@@ -78,10 +78,13 @@ input_ids_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="inpu
 attention_mask_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="attention_mask")
 
 # Get BERT output
-bert_output = bert_model([input_ids_input, attention_mask_input])[1]
+bert_output = bert_model([input_ids_input, attention_mask_input])[0]  # Updated to [0] for last layer output
+
+# Pooling layer to reduce dimensionality
+pooled_output = tf.keras.layers.GlobalAveragePooling1D()(bert_output)
 
 # Dense layer for classification
-output = tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')(bert_output)
+output = tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')(pooled_output)
 
 # Build and compile the model
 model = tf.keras.Model(inputs=[input_ids_input, attention_mask_input], outputs=output)
@@ -89,6 +92,10 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 
 # Train the model
 model.fit([input_ids, attention_masks], train_df['encoded_labels'], epochs=5, batch_size=16)
+
+
+
+
 # ==== testing =====
 
 # loaded_model = load_model('movie_name_prediction_model')
