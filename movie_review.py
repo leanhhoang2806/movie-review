@@ -22,7 +22,6 @@ from torch.utils.data import TensorDataset, DataLoader
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
 imdb_df = pd.read_csv(csv_file_path)
-os.environ["TRANSFORMERS_CACHE"] = "./"
 
 # Define a regular expression pattern for extracting text between quotation marks
 movie_name_pattern = re.compile(r'"([^"]+)"')
@@ -50,71 +49,6 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 print(extracted_df.head())
-df = extracted_df
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
-
-
-# Move model to GPU
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-# Encode the reviews and movie names
-tokenized_reviews = df['review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True))
-labels = df['movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
-
-# Split the dataset into training and validation sets
-train_inputs, val_inputs, train_labels, val_labels = train_test_split(tokenized_reviews, labels, test_size=0.2, random_state=42)
-
-# Convert data to PyTorch tensors and move to GPU
-train_inputs = torch.tensor(train_inputs).to(device)
-val_inputs = torch.tensor(val_inputs).to(device)
-train_labels = torch.tensor(train_labels).to(device)
-val_labels = torch.tensor(val_labels).to(device)
-
-# Create DataLoader for training and validation sets
-train_data = TensorDataset(train_inputs, train_labels)
-train_dataloader = DataLoader(train_data, batch_size=4, shuffle=True)
-
-val_data = TensorDataset(val_inputs, val_labels)
-val_dataloader = DataLoader(val_data, batch_size=4, shuffle=False)
-
-# Move optimizer to GPU
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-
-for epoch in range(3):  # Adjust the number of epochs as needed
-    model.train()
-    total_loss = 0
-
-    for batch in train_dataloader:
-        inputs, labels = batch
-        inputs, labels = inputs.to(device), labels.to(device)  # Move batch to GPU
-        optimizer.zero_grad()
-
-        outputs = model(inputs, labels=labels)
-        loss = outputs.loss
-        total_loss += loss.item()
-
-        loss.backward()
-        optimizer.step()
-
-    avg_loss = total_loss / len(train_dataloader)
-    print(f"Epoch {epoch+1}, Average Loss: {avg_loss}")
-
-# Evaluate the model on the validation set
-model.eval()
-with torch.no_grad():
-    val_loss = 0
-    for batch in val_dataloader:
-        inputs, labels = batch
-        inputs, labels = inputs.to(device), labels.to(device)  # Move batch to GPU
-        outputs = model(inputs, labels=labels)
-        val_loss += outputs.loss.item()
-
-    avg_val_loss = val_loss / len(val_dataloader)
-    print(f"Validation Loss: {avg_val_loss}")
-
-
 
 # ======== Working version, do not touch ===========
 
