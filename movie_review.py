@@ -58,7 +58,7 @@ tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conl
 model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9)
 
 # Tokenize and encode the DataFrame
-def encode_data(df, tokenizer):
+def encode_data(df, tokenizer, max_length=512):
     tokenized_reviews = []
     token_labels = []
 
@@ -67,9 +67,10 @@ def encode_data(df, tokenizer):
         movie_names = [row['movie_names']]
 
         # Tokenize the text
-        tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review)))
+        tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review, max_length=max_length, truncation=True)))
 
-        # Initialize labels with 'O' (Outside entity) for each token
+        # Truncate or split sequences longer than the model's maximum length
+        tokens = tokens[:max_length - 2]  # Account for [CLS] and [SEP] tokens
         labels = ['O'] * len(tokens)
 
         # Convert extracted entities to token-level labels
@@ -88,7 +89,7 @@ def encode_data(df, tokenizer):
 
     return tokenized_reviews, token_labels
 
-tokenized_reviews, token_labels = encode_data(extracted_df, tokenizer)
+tokenized_reviews, token_labels = encode_data(df, tokenizer)
 
 # Prepare training data
 train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
@@ -98,8 +99,8 @@ train_labels = torch.tensor(train_labels)
 val_labels = torch.tensor(val_labels)
 
 # Tokenize and encode the training data
-train_encodings = tokenizer(train_tokens, padding=True, truncation=True, return_tensors='pt')
-val_encodings = tokenizer(val_tokens, padding=True, truncation=True, return_tensors='pt')
+train_encodings = tokenizer(train_tokens, padding=True, return_tensors='pt', truncation=True)
+val_encodings = tokenizer(val_tokens, padding=True, return_tensors='pt', truncation=True)
 
 # Set up optimizer and training parameters
 optimizer = AdamW(model.parameters(), lr=1e-5)
@@ -118,10 +119,10 @@ for epoch in range(num_epochs):
 model.save_pretrained('./fine_tuned_bert_ner_model')
 
 # Example of using the fine-tuned model for inference
-def extract_movie_names(review, model, tokenizer):
-    tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review)))
-    labels = model(**tokenizer(review, padding=True, truncation=True, return_tensors='pt')).logits.argmax(dim=2)
-    movie_names = [tokens[i] for i in range(len(tokens)) if labels[0][i].item() in [5, 6, 7, 8]]  # Extract tokens labeled as 'B-PER' or 'I-PER'
+def extract_movie_names(review, model, tokenizer, max_length=512):
+    tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review, max_length=max_length, truncation=True)))
+    labels = model(**tokenizer(review, padding=True, return_tensors='pt', truncation=True)).logits.argmax(dim=2)
+    movie_names = [tokens[i] for i in range(min(len(tokens), max_length)) if labels[0][i].item() in [5, 6, 7, 8]]  # Extract tokens labeled as 'B-PER' or 'I-PER'
     return tokenizer.decode(tokenizer.convert_tokens_to_ids(movie_names))
 
 # Example usage
