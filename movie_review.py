@@ -54,8 +54,8 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
 
 # Encode the reviews and movie names
-tokenized_reviews = df['Review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True))
-labels = df['Movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
+tokenized_reviews = df['review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True))
+labels = df['movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
 
 # Split the dataset into training and validation sets
 train_inputs, val_inputs, train_labels, val_labels = train_test_split(tokenized_reviews, labels, test_size=0.2, random_state=42)
