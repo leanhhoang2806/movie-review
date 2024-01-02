@@ -72,7 +72,7 @@ bert_model = TFBertModel.from_pretrained('bert-base-uncased')
 # Define and compile BERT-based model
 model = tf.keras.Sequential([
     bert_model,
-    tf.keras.layers.Flatten(),  # You can modify this part based on your specific requirements
+    # tf.keras.layers.Flatten(),  # You can modify this part based on your specific requirements
     tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
 ])
 
