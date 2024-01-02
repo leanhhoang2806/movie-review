@@ -5,7 +5,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from sklearn.preprocessing import LabelEncoder
-from transformers import BertTokenizer
+from transformers import BertTokenizer, BertForTokenClassification
 from transformers import TFBertForSequenceClassification
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten
@@ -13,6 +13,8 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 from tensorflow.keras.models import load_model
 from transformers import TFBertModel
+from transformers import AdamW
+import torch
 
 
 # Load the IMDb dataset
@@ -53,29 +55,79 @@ from transformers import BertTokenizer, pipeline
 
 # Load pre-trained BERT NER model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english')
+model = BertForTokenClassification.from_pretrained('dbmdz/bert-large-cased-finetuned-conll03-english', num_labels=9)
 
-# Example text and extracted entities
-text = "Great movie starring Tom Hanks. I didn't like the performance of Brad Pitt."
-entities = ["Tom Hanks", "Brad Pitt"]
+# Tokenize and encode the DataFrame
+def encode_data(df, tokenizer):
+    tokenized_reviews = []
+    token_labels = []
 
-# Tokenize the text
-tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text)))
+    for _, row in df.iterrows():
+        review = row['review']
+        movie_names = [row['movie_names']]
 
-# Initialize labels with 'O' (Outside entity) for each token
-labels = ['O'] * len(tokens)
+        # Tokenize the text
+        tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review)))
 
-# Convert extracted entities to token-level labels
-for entity in entities:
-    entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
-    try:
-        start_idx = tokens.index(entity_tokens[0])
-        end_idx = start_idx + len(entity_tokens)
-        labels[start_idx:end_idx] = ['B-PER'] + ['I-PER'] * (len(entity_tokens) - 1)
-    except ValueError:
-        # Handle the case where the entity is not found in the tokens
-        pass
+        # Initialize labels with 'O' (Outside entity) for each token
+        labels = ['O'] * len(tokens)
 
-print(labels)
+        # Convert extracted entities to token-level labels
+        for entity in movie_names:
+            entity_tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(entity)))
+            try:
+                start_idx = tokens.index(entity_tokens[0])
+                end_idx = start_idx + len(entity_tokens)
+                labels[start_idx:end_idx] = ['B-PER'] + ['I-PER'] * (len(entity_tokens) - 1)
+            except ValueError:
+                # Handle the case where the entity is not found in the tokens
+                pass
+
+        tokenized_reviews.append(tokens)
+        token_labels.append(labels)
+
+    return tokenized_reviews, token_labels
+
+tokenized_reviews, token_labels = encode_data(extracted_df, tokenizer)
+
+# Prepare training data
+train_tokens, val_tokens, train_labels, val_labels = train_test_split(tokenized_reviews, token_labels, test_size=0.2, random_state=42)
+
+# Convert labels to tensors
+train_labels = torch.tensor(train_labels)
+val_labels = torch.tensor(val_labels)
+
+# Tokenize and encode the training data
+train_encodings = tokenizer(train_tokens, padding=True, truncation=True, return_tensors='pt')
+val_encodings = tokenizer(val_tokens, padding=True, truncation=True, return_tensors='pt')
+
+# Set up optimizer and training parameters
+optimizer = AdamW(model.parameters(), lr=1e-5)
+
+# Fine-tune BERT for named entity recognition
+num_epochs = 3
+for epoch in range(num_epochs):
+    outputs = model(**train_encodings, labels=train_labels)
+    loss = outputs.loss
+
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+
+# Save or use the fine-tuned model for named entity recognition
+model.save_pretrained('./fine_tuned_bert_ner_model')
+
+# Example of using the fine-tuned model for inference
+def extract_movie_names(review, model, tokenizer):
+    tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(review)))
+    labels = model(**tokenizer(review, padding=True, truncation=True, return_tensors='pt')).logits.argmax(dim=2)
+    movie_names = [tokens[i] for i in range(len(tokens)) if labels[0][i].item() in [5, 6, 7, 8]]  # Extract tokens labeled as 'B-PER' or 'I-PER'
+    return tokenizer.decode(tokenizer.convert_tokens_to_ids(movie_names))
+
+# Example usage
+sample_review = "I watched a great movie starring Tom Hanks yesterday."
+predicted_movie_names = extract_movie_names(sample_review, model, tokenizer)
+print(f"Predicted Movie Names: {predicted_movie_names}")
 
 
 # ======== Working version, do not touch ===========
