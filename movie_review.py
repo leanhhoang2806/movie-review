@@ -16,6 +16,7 @@ from transformers import TFBertModel
 from transformers import AdamW
 import torch
 import os
+from torch.utils.data import TensorDataset, DataLoader
 
 
 # Load the IMDb dataset
@@ -48,7 +49,7 @@ for review in imdb_df['review']:
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
-
+df = extracted_df
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
 

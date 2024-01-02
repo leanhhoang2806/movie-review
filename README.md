@@ -20,5 +20,9 @@ $which python3.8
 generate virtual env with the path
 $virtualenv -p /usr/local/bin/python3.8 myenv
 
+# Docker clean up
+sudo docker system prune
+
+
 instruction on installing nvidia container toolkit 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
