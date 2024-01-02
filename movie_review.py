@@ -107,8 +107,9 @@ for epoch in range(num_epochs):
     for tokens, labels in zip(train_tokens, train_labels):
         # Ensure proper structure for input tokens
         tokens = {key: tokens[key].squeeze(0) for key in tokens}
+        labels = labels.unsqueeze(0)  # Add batch dimension
         
-        outputs = model(**tokens, labels=labels.unsqueeze(0))
+        outputs = model(**tokens, labels=labels)
         loss = outputs.loss
 
         loss.backward()
