@@ -45,7 +45,6 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-
 # Load pre-trained BERT tokenizer and model
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 bert_model = TFBertModel.from_pretrained('bert-base-uncased')
@@ -57,8 +56,8 @@ attention_masks = []
 
 for review in extracted_df['review']:
     inputs = tokenizer(review, padding=True, truncation=True, return_tensors='tf', max_length=max_length)
-    input_ids.append(inputs['input_ids'][0])
-    attention_masks.append(inputs['attention_mask'][0])
+    input_ids.append(tf.convert_to_tensor(inputs['input_ids'][0]))
+    attention_masks.append(tf.convert_to_tensor(inputs['attention_mask'][0]))
 
 # Convert lists to numpy arrays
 input_ids = np.array(input_ids)
@@ -79,7 +78,7 @@ input_ids_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="inpu
 attention_mask_input = tf.keras.Input(shape=(max_length,), dtype=tf.int32, name="attention_mask")
 
 # Get BERT output
-bert_output = bert_model(input_ids_input, attention_mask=attention_mask_input)[1]
+bert_output = bert_model([input_ids_input, attention_mask_input])[1]
 
 # Dense layer for classification
 output = tf.keras.layers.Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')(bert_output)
@@ -90,7 +89,6 @@ model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=
 
 # Train the model
 model.fit([input_ids, attention_masks], train_df['encoded_labels'], epochs=5, batch_size=16)
-
 # ==== testing =====
 
 # loaded_model = load_model('movie_name_prediction_model')
