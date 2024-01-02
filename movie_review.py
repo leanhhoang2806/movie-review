@@ -108,6 +108,9 @@ for epoch in range(num_epochs):
     for tokens, labels in zip(train_tokens, train_labels):
         # Ensure proper structure for input tokens
         tokens = {key: tokens[key].squeeze(0) for key in tokens}
+        
+        # Add batch dimension to labels tensor
+        labels = labels.unsqueeze(0)
 
         # Flatten the labels tensor to match the model's expectations
         labels = labels.view(-1)
