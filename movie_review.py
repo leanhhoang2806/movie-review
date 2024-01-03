@@ -108,7 +108,8 @@ def collate_fn(batch):
     input_ids_padded = pad_sequence([torch.cat([item, torch.zeros(max_review_length - item.shape[0])]) for item in input_ids], batch_first=True)
     targets_padded = pad_sequence([torch.cat([item, torch.zeros(max_movie_names_length - item.shape[0])]) for item in targets], batch_first=True)
 
-    return {'review_token': input_ids_padded, 'movie_names_token': targets_padded}
+    return {'review_token': input_ids_padded.squeeze(dim=1), 'movie_names_token': targets_padded.squeeze(dim=1)}
+
 
 
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
