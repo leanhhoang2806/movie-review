@@ -73,18 +73,18 @@ output_size = y_train.shape[1]
 print(f"training input shape {input_shape}")
 print(f"expected out put tensor is {output_size}")
 
-# # Build the RNN model
-# model = Sequential()
-# model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
-# model.add(Dense(units=output_size, activation='linear'))
+# Build the RNN model
+model = Sequential()
+model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
+model.add(Dense(units=output_size, activation='linear'))
 
-# model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(optimizer='adam', loss='mean_squared_error')
 
-# # Print model summary for debugging
-# model.summary()
+# Print model summary for debugging
+model.summary()
 
-# # Train the model
-# history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+# Train the model
+history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
 
 # # Evaluate the model
 # loss = model.evaluate(X_test, y_test)
