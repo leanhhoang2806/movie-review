@@ -70,8 +70,9 @@ attention_masks = torch.tensor(attention_masks)
 labels = []
 for i, tokenized_text in enumerate(tokenized_texts):
     # Convert labels to 1 for movie name tokens, 0 otherwise
-    label = [1 if tokenized_text[j] in tokenizer.convert_ids_to_tokens(input_ids[i, j].item()) else 0 for j in range(len(tokenized_text))]
+    label = [1 if tokenized_text[j] == tokenizer.convert_ids_to_tokens(input_ids[i, j].item()) else 0 for j in range(len(tokenized_text))]
     labels.append(label)
+
 labels = torch.tensor(labels)
 
 dataset = TensorDataset(input_ids, attention_masks, labels)
