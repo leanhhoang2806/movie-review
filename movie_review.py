@@ -56,7 +56,7 @@ for review in imdb_df['review']:
 
             # Get BERT token for review
             review_tokens = get_bert_token(review)
-            extracted_data.append({'review': review_tokens, 'movie_names': movie_name_tokens})
+            extracted_data.append({'review_token': review_tokens, 'movie_names_token': movie_name_tokens, "review": review, "movie_names": movie_name_pattern})
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
