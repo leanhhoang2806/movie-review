@@ -140,6 +140,7 @@ for epoch in range(num_epochs):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
         optimizer.zero_grad()
         logits = model(input_ids)
+        # Flatten the logits and targets to match dimensions
         loss = criterion(logits.view(-1, logits.shape[-1]), targets.view(-1))
         loss.backward()
         optimizer.step()
@@ -158,7 +159,8 @@ with torch.no_grad():
         all_preds.append(preds)
 
 all_preds = torch.cat(all_preds).numpy()
-accuracy = accuracy_score(test_df['movie_names_token'].apply(lambda x: x[0]), all_preds)
+# Flatten the test targets to match dimensions
+accuracy = accuracy_score(test_df['movie_names_token'].apply(lambda x: x[0]).values.flatten(), all_preds.flatten())
 print(f'Test Accuracy: {accuracy}')
 
 # ======== Working version, do not touch ===========
