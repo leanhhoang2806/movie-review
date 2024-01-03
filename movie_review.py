@@ -121,51 +121,10 @@ class SequencePredictionModel(torch.nn.Module):
         logits = self.linear(outputs.last_hidden_state)
         return logits
 
-# Load the BERT model and tokenizer
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-bert_model = BertModel.from_pretrained('bert-base-uncased')
 
-# Instantiate the model and set up the training loop
-model = SequencePredictionModel(bert_model)
-optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-criterion = torch.nn.CrossEntropyLoss()
-
-# Training loop
-num_epochs = 5  # Adjust based on your data
-
-for epoch in range(num_epochs):
-    model.train()
-    total_loss = 0
-    for batch in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}'):
-        input_ids, targets = batch['review_token'], batch['movie_names_token']
-        optimizer.zero_grad()
-        logits = model(input_ids)
-        # Flatten the logits and targets to match dimensions
-        loss = criterion(logits.view(-1, logits.shape[-1]), targets.view(-1))
-        loss.backward()
-        optimizer.step()
-        total_loss += loss.item()
-
-    print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
-
-# Evaluate on the test set
-model.eval()
-all_preds = []
-all_targets = []
-with torch.no_grad():
-    for batch in tqdm(test_loader, desc='Evaluating'):
-        input_ids, targets = batch['review_token'], batch['movie_names_token']
-        logits = model(input_ids)
-        preds = torch.argmax(logits, dim=-1)
-        all_preds.append(preds)
-        all_targets.append(targets)
-
-all_preds = torch.cat(all_preds).view(-1)
-all_targets = torch.cat(all_targets).view(-1)
-
-# Compute accuracy
-accuracy = accuracy_score(all_targets.numpy(), all_preds.numpy())
-print(f'Test Accuracy: {accuracy}')
+sample = train_dataset[0]
+print('Shape of review_token:', sample['review_token'].shape)
+print('Shape of movie_names_token:', sample['movie_names_token'].shape)
 
 # ======== Working version, do not touch ===========
 
