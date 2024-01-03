@@ -154,7 +154,7 @@ all_preds = []
 all_targets = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
-        input_ids, targets = batch['review_token'], batch['movie_names_token
+        input_ids, targets = batch['review_token'], batch['movie_names_token']
 
 # ======== Working version, do not touch ===========
 
