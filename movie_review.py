@@ -95,8 +95,19 @@ class MyDataset(Dataset):
 train_dataset = MyDataset(train_df['review_token'], train_df['movie_names_token'])
 test_dataset = MyDataset(test_df['review_token'], test_df['movie_names_token'])
 
-train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=4)
+# Define a collate function for DataLoader to handle padding
+def collate_fn(batch):
+    input_ids = [item['review_token'] for item in batch]
+    targets = [item['movie_names_token'] for item in batch]
+
+    # Pad sequences to the length of the longest sequence in the batch for both inputs and targets
+    input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
+    targets_padded = pad_sequence(targets, batch_first=True, padding_value=0)
+
+    return {'review_token': input_ids_padded, 'movie_names_token': targets_padded}
+
+train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
+test_loader = DataLoader(test_dataset, batch_size=4, collate_fn=collate_fn)
 
 # Define the BERT model for sequence-to-sequence prediction
 class SequencePredictionModel(torch.nn.Module):
@@ -127,10 +138,8 @@ for epoch in range(num_epochs):
     total_loss = 0
     for batch in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
-        # Use pad_sequence to pad sequences to the same length
-        input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
         optimizer.zero_grad()
-        logits = model(input_ids_padded)
+        logits = model(input_ids)
         loss = criterion(logits.view(-1, logits.shape[-1]), targets.view(-1))
         loss.backward()
         optimizer.step()
@@ -144,8 +153,7 @@ all_preds = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
-        input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
-        logits = model(input_ids_padded)
+        logits = model(input_ids)
         preds = torch.argmax(logits, dim=-1)
         all_preds.append(preds)
 
