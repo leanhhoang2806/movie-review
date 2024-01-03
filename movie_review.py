@@ -102,7 +102,7 @@ def collate_fn(batch):
 
     # Pad sequences to the length of the longest sequence in the batch for both inputs and targets
     input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
-    targets_padded = pad_sequence(targets, batch_first=True, padding_value=-100)
+    targets_padded = pad_sequence(targets, batch_first=True, padding_value=0)
 
     return {'review_token': input_ids_padded, 'movie_names_token': targets_padded}
 
@@ -128,7 +128,7 @@ bert_model = BertModel.from_pretrained('bert-base-uncased')
 # Instantiate the model and set up the training loop
 model = SequencePredictionModel(bert_model)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
+criterion = torch.nn.CrossEntropyLoss()
 
 # Training loop
 num_epochs = 5  # Adjust based on your data
@@ -155,6 +155,17 @@ all_targets = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
+        logits = model(input_ids)
+        preds = torch.argmax(logits, dim=-1)
+        all_preds.append(preds)
+        all_targets.append(targets)
+
+all_preds = torch.cat(all_preds).view(-1)
+all_targets = torch.cat(all_targets).view(-1)
+
+# Compute accuracy
+accuracy = accuracy_score(all_targets.numpy(), all_preds.numpy())
+print(f'Test Accuracy: {accuracy}')
 
 # ======== Working version, do not touch ===========
 
