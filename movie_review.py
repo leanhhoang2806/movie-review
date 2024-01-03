@@ -52,68 +52,72 @@ extracted_df = pd.DataFrame(extracted_data)
 df =extracted_df
 print(extracted_df.head())
 
-print("Load pre-trained BERT tokenizer and model")
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertForTokenClassification.from_pretrained('bert-base-uncased', num_labels=2)
+from torch.utils.data import TensorDataset, DataLoader
 
-# print("Set up GPU support if available")
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model.to(device)
+# Define the model and tokenizer
+model_name = 'bert-base-uncased'
+tokenizer = BertTokenizer.from_pretrained(model_name)
+model = BertForTokenClassification.from_pretrained(model_name, num_labels=2)
+# Sample data (you need to replace this with your actual dataset)
+texts = ["The movie Titanic is a classic.", "Inception is a mind-bending film."]
 
-print("Encode the reviews and movie names")
-tokenized_reviews = df['review'].apply(lambda x: tokenizer.encode(x, add_special_tokens=True, truncation=True, max_length=128))
-labels = df['movie_names'].apply(lambda x: [1 if token in tokenizer.encode(x, add_special_tokens=True) else 0 for token in tokenized_reviews])
+# Prepare the data
+tokenized_texts = [tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text))) for text in texts]
+labels = [[1] * len(tokenized_text) for tokenized_text in tokenized_texts]  # Assuming 1 for the movie name token, 0 otherwise
+input_ids = [tokenizer.convert_tokens_to_ids(tokenized_text) for tokenized_text in tokenized_texts]
+attention_masks = [[1] * len(input_id) for input_id in input_ids]
+input_ids = torch.tensor(input_ids)
+attention_masks = torch.tensor(attention_masks)
+labels = torch.tensor(labels)
 
-# print("Split the dataset into training and validation sets")
-# train_inputs, val_inputs, train_labels, val_labels = train_test_split(tokenized_reviews, labels, test_size=0.2, random_state=42)
+dataset = TensorDataset(input_ids, attention_masks, labels)
 
-# print("Convert data to PyTorch tensors and move to GPU")
-# train_inputs = torch.tensor(train_inputs).to(device)
-# val_inputs = torch.tensor(val_inputs).to(device)
-# train_labels = torch.tensor(train_labels).to(device)
-# val_labels = torch.tensor(val_labels).to(device)
+# Define data loader
+batch_size = 2
+dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-# print("Create DataLoader for training and validation sets")
-# train_data = TensorDataset(train_inputs, train_labels)
-# train_dataloader = DataLoader(train_data, batch_size=2, shuffle=True)
+# Training
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
 
-# val_data = TensorDataset(val_inputs, val_labels)
-# val_dataloader = DataLoader(val_data, batch_size=2, shuffle=False)
+optimizer = torch.optim.AdamW(params=model.parameters(), lr=2e-5)
 
-# print("Fine-tune the BERT model")
-# optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+for epoch in range(3):  # Adjust the number of epochs as needed
+    model.train()
+    total_loss = 0
 
-# for epoch in range(3):  # Adjust the number of epochs as needed
-#     model.train()
-#     total_loss = 0
+    for batch in dataloader:
+        batch = tuple(t.to(device) for t in batch)
+        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[2]}
 
-#     for batch in tqdm(train_dataloader, desc=f'Epoch {epoch+1}'):
-#         inputs, labels = batch
-#         inputs, labels = inputs.to(device), labels.to(device)  # Move batch to GPU
-#         optimizer.zero_grad()
+        optimizer.zero_grad()
+        outputs = model(**inputs)
+        loss = outputs.loss
+        loss.backward()
+        optimizer.step()
 
-#         outputs = model(inputs, labels=labels)
-#         loss = outputs.loss
-#         total_loss += loss.item()
+        total_loss += loss.item()
 
-#         loss.backward()
-#         optimizer.step()
+    average_loss = total_loss / len(dataloader)
+    print(f"Epoch {epoch + 1}, Average Loss: {average_loss}")
 
-#     avg_loss = total_loss / len(train_dataloader)
-#     print(f"Epoch {epoch+1}, Average Loss: {avg_loss}")
+# Inference
+model.eval()
+with torch.no_grad():
+    example_text = "I enjoyed watching Titanic last night."
+    tokenized_text = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(example_text)))
+    input_ids = torch.tensor([tokenizer.convert_tokens_to_ids(tokenized_text)])
+    attention_mask = torch.tensor([[1] * len(input_ids[0])])
 
-# print("Evaluate the model on the validation set")
-# model.eval()
-# with torch.no_grad():
-#     val_loss = 0
-#     for batch in tqdm(val_dataloader, desc='Validation'):
-#         inputs, labels = batch
-#         inputs, labels = inputs.to(device), labels.to(device)  # Move batch to GPU
-#         outputs = model(inputs, labels=labels)
-#         val_loss += outputs.loss.item()
+    input_ids = input_ids.to(device)
+    attention_mask = attention_mask.to(device)
 
-#     avg_val_loss = val_loss / len(val_dataloader)
-#     print(f"Validation Loss: {avg_val_loss}")
+    outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+    predictions = torch.argmax(outputs.logits, dim=2)
+
+    # Extract movie names based on predictions
+    movie_names = [token for token, label in zip(tokenized_text, predictions[0].tolist()) if label == 1]
+    print("Extracted Movie Names:", movie_names)
 
 # ======== Working version, do not touch ===========
 
