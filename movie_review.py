@@ -96,6 +96,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 vocabulary_size = len(set(df['review_token'].sum())) + 1
 
+# Split the data into training and testing sets
+X = np.array(df['review_token'].tolist())
+y = np.array(df['movie_names_token'].tolist())
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
 # Build the RNN model
 model = Sequential()
 model.add(Embedding(input_dim=vocabulary_size, output_dim=50, input_length=max_review_length))
@@ -103,8 +108,11 @@ model.add(SimpleRNN(units=50, activation='tanh'))
 model.add(Dense(units=max_movie_length * vocabulary_size, activation='linear'))
 model.compile(optimizer='adam', loss='mean_squared_error')
 
+# Print model summary for debugging
+model.summary()
+
 # Train the model
-model.fit(X_train, y_train.flatten(), epochs=10, batch_size=32, validation_split=0.2)
+history = model.fit(X_train, y_train.flatten(), epochs=10, batch_size=32, validation_split=0.2)
 
 # Evaluate the model
 loss = model.evaluate(X_test, y_test.flatten())
