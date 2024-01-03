@@ -78,63 +78,7 @@ df = extracted_df[["review_token", "movie_names_token"]]
 # Train-test split
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
-# Define a PyTorch dataset
-class MyDataset(Dataset):
-    def __init__(self, reviews, targets):
-        self.reviews = reviews
-        self.targets = targets
-
-    def __len__(self):
-        return len(self.reviews)
-
-    def __getitem__(self, idx):
-        return {'review_token': torch.tensor(self.reviews.iloc[idx]),
-                'movie_names_token': torch.tensor(self.targets.iloc[idx])}
-
-# Instantiate the dataset and DataLoader
-train_dataset = MyDataset(train_df['review_token'], train_df['movie_names_token'])
-test_dataset = MyDataset(test_df['review_token'], test_df['movie_names_token'])
-
-# Define a collate function for DataLoader to handle padding
-def collate_fn(batch):
-    input_ids = [item['review_token'] for item in batch]
-    targets = [item['movie_names_token'] for item in batch]
-
-    # Find the maximum length for both review and movie names
-    max_review_length = max(item.shape[0] for item in input_ids)
-    max_movie_names_length = max(item.shape[0] for item in targets)
-
-    # Pad sequences to the maximum length for both inputs and targets
-    input_ids_padded = pad_sequence([torch.cat([item, torch.zeros(max_review_length - item.shape[0])]) for item in input_ids], batch_first=True)
-    targets_padded = pad_sequence([torch.cat([item, torch.zeros(max_movie_names_length - item.shape[0])]) for item in targets], batch_first=True)
-
-    return {'review_token': input_ids_padded.squeeze(dim=1), 'movie_names_token': targets_padded.squeeze(dim=1)}
-
-
-
-train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
-test_loader = DataLoader(test_dataset, batch_size=4, collate_fn=collate_fn)
-
-# Define the BERT model for sequence-to-sequence prediction
-class SequencePredictionModel(torch.nn.Module):
-    def __init__(self, bert_model):
-        super(SequencePredictionModel, self).__init__()
-        self.bert_model = bert_model
-        self.linear = torch.nn.Linear(bert_model.config.hidden_size, len(df['movie_names_token'][0]))
-
-    def forward(self, input_ids):
-        outputs = self.bert_model(input_ids=input_ids)
-        logits = self.linear(outputs.last_hidden_state)
-        return logits
-    
-
-for batch in train_loader:
-    review_token_shape = batch['review_token'].shape
-    movie_names_token_shape = batch['movie_names_token'].shape
-
-    print(f'Review Token Shape: {review_token_shape}')
-    print(f'Movie Names Token Shape: {movie_names_token_shape}')
-    print('-' * 50)
+print(train_df.shape())
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
