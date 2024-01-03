@@ -68,10 +68,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Determine input_shape from X_train and output_size from y_train
-input_shape = X_train.shape[1:]  # Excludes the batch size
+input_shape = X_train.shape[1]  # Excludes the batch size
 output_size = y_train.shape[1]
-print(input_shape)
-print(output_size)
+print(f"training input shape {input_shape}")
+print(f"expected out put tensor is {output_size}")
 
 # # Build the RNN model
 # model = Sequential()
