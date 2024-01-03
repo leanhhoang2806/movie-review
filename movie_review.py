@@ -101,28 +101,43 @@ X = np.array(df['review_token'].tolist())
 y = np.array(df['movie_names_token'].tolist())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+from sklearn.model_selection import train_test_split
+
+# Generate some random data
+# Replace this with your actual data
+num_samples = 1000
+time_steps = 10
+input_size = 4
+output_size = 2
+
+X = np.random.rand(num_samples, time_steps, input_size)
+Y = np.random.rand(num_samples, output_size)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
 # Build the RNN model
 model = Sequential()
-model.add(Embedding(input_dim=vocabulary_size, output_dim=50, input_length=max_review_length))
-model.add(SimpleRNN(units=50, activation='tanh'))
-model.add(Dense(units=max_movie_length * vocabulary_size, activation='linear'))
+model.add(SimpleRNN(units=50, activation='tanh', input_shape=(time_steps, input_size)))
+model.add(Dense(units=output_size, activation='linear'))
+
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Print model summary for debugging
 model.summary()
 
 # Train the model
-history = model.fit(X_train, y_train.flatten(), epochs=10, batch_size=32, validation_split=0.2)
+history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
 
 # Evaluate the model
-loss = model.evaluate(X_test, y_test.flatten())
+loss = model.evaluate(X_test, y_test)
 print(f'Mean Squared Error on Test Data: {loss}')
 
 # Make predictions
 predictions = model.predict(X_test)
-
-# Reshape predictions to match the original shape of y_test
-predictions = predictions.reshape(-1, max_movie_length, vocabulary_size)
 
 # Print some example predictions
 for i in range(5):
