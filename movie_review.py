@@ -1,30 +1,11 @@
 import pandas as pd
 import re
-import string
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
-from sklearn.preprocessing import LabelEncoder
-from transformers import BertTokenizer, BertForTokenClassification
-from transformers import TFBertForSequenceClassification
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Flatten
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-import numpy as np
-from tensorflow.keras.models import load_model
-from transformers import TFBertModel
-from transformers import AdamW
-import torch
-import os
-from torch.utils.data import TensorDataset, DataLoader
-from tqdm import tqdm
 from itertools import chain
-from torch.utils.data import Dataset, DataLoader
-from transformers import BertModel, BertForSequenceClassification, BertTokenizer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-from torch.nn.utils.rnn import pad_sequence
-from tensorflow.keras.layers import Embedding, SimpleRNN, Dense, LSTM
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from transformers import BertTokenizer
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -56,7 +37,7 @@ for review in imdb_df['review']:
     # Append the review and cleaned text to the list if the list is not empty
     if cleaned_names and len(cleaned_names) == 1:
         corrected_name = cleaned_names[0].strip()
-        if len(corrected_name.split())  == 2:
+        if len(corrected_name.split()) == 2:
             # Get BERT token for movie name
             movie_name_tokens_nested = [get_bert_token(token) for token in corrected_name.split()]
             movie_name_tokens_flatten = list(chain(*movie_name_tokens_nested))
@@ -68,36 +49,21 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-print(f"The percetange of extraction is : {len(extracted_df) * 100 / len(imdb_df)}")
-print(f"Training data contains {len(extracted_df)} rows")
-
-df = extracted_df[["review_token", "movie_names_token"]]
-
-# Padding function
-def pad_tokens(tokens_list, max_length):
-    return pad_sequences([tokens_list], maxlen=max_length, padding='post', truncating='post')[0]
-
-# Find the maximum lengths
-max_review_length = max(df['review_token'].apply(len))
-max_movie_length = max(df['movie_names_token'].apply(len))
+# Determine the maximum lengths
+max_review_length = max(extracted_df['review_token'].apply(len))
+max_movie_length = max(extracted_df['movie_names_token'].apply(len))
 
 # Apply padding to the DataFrame
-df['review_token'] = df['review_token'].apply(lambda x: pad_tokens(x, max_review_length))
-df['movie_names_token'] = df['movie_names_token'].apply(lambda x: pad_tokens(x, max_movie_length))
-print(df.head())
+extracted_df['review_token'] = extracted_df['review_token'].apply(lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
+extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
+
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(
-    np.array(df['review_token'].tolist()),
-    np.array(df['movie_names_token'].tolist()),
+    np.array(extracted_df['review_token'].tolist()),
+    np.array(extracted_df['movie_names_token'].tolist()),
     test_size=0.2,
     random_state=42
 )
-
-# Split the data into training and testing sets
-X = np.array(df['review_token'].tolist())
-y = np.array(df['movie_names_token'].tolist())
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 
 # Determine input_shape from X_train and output_size from y_train
 input_shape = X_train.shape[1:]  # Excludes the batch size
@@ -129,6 +95,7 @@ for i in range(5):
     print("Actual:", y_test[i])
     print("Predicted:", predictions[i])
     print()
+
 
 
 # ======== Working version, do not touch ===========
