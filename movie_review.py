@@ -63,15 +63,15 @@ texts = ["The movie Titanic is a classic.", "Inception is a mind-bending film."]
 
 # Prepare the data
 tokenized_texts = [tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text))) for text in texts]
+input_ids = [tokenizer.convert_tokens_to_ids(tokenized_text) for tokenized_text in tokenized_texts]
+attention_masks = [[1] * len(input_id) for input_id in input_ids]
+input_ids = torch.tensor(input_ids)
+attention_masks = torch.tensor(attention_masks)
 labels = []
 for i, tokenized_text in enumerate(tokenized_texts):
     # Convert labels to 1 for movie name tokens, 0 otherwise
     label = [1 if tokenized_text[j] in tokenizer.convert_ids_to_tokens(input_ids[i, j].item()) else 0 for j in range(len(tokenized_text))]
     labels.append(label)
-input_ids = [tokenizer.convert_tokens_to_ids(tokenized_text) for tokenized_text in tokenized_texts]
-attention_masks = [[1] * len(input_id) for input_id in input_ids]
-input_ids = torch.tensor(input_ids)
-attention_masks = torch.tensor(attention_masks)
 labels = torch.tensor(labels)
 
 dataset = TensorDataset(input_ids, attention_masks, labels)
