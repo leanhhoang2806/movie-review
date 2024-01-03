@@ -32,14 +32,9 @@ extracted_data = []
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-def get_bert_token(word, model_name='bert-base-uncased'):
-    # Load the BERT tokenizer
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-
-    # Encode the input word and get the token ID
-    token_id = tokenizer.encode(word, add_special_tokens=False)
-
-    return token_id
+def get_bert_token(word):
+    token_ids = tokenizer.encode(word, add_special_tokens=False, padding=True, truncation=True, max_length=512)
+    return token_ids
 
 # Loop through each review and extract text between quotation marks
 for review in imdb_df['review']:
