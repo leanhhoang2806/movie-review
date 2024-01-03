@@ -30,6 +30,17 @@ movie_name_pattern = re.compile(r'"([^"]+)"')
 # Initialize an empty list to store extracted data
 extracted_data = []
 
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+def get_bert_token(word, model_name='bert-base-uncased'):
+    # Load the BERT tokenizer
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+
+    # Encode the input word and get the token ID
+    token_id = tokenizer.encode(word, add_special_tokens=False)
+
+    return token_id
+
 # Loop through each review and extract text between quotation marks
 for review in imdb_df['review']:
     # Extract text between quotation marks using the defined pattern
@@ -45,6 +56,11 @@ for review in imdb_df['review']:
     if cleaned_names and len(cleaned_names) == 1:
         corrected_name = cleaned_names[0].strip()
         if len(corrected_name) > 2:
+            # Get BERT token for movie name
+            movie_name_tokens = [get_bert_token(token) for token in corrected_name.split()]
+
+            # Get BERT token for review
+            review_tokens = get_bert_token(review)
             extracted_data.append({'review': review, 'movie_names': corrected_name})
 
 # Create a new DataFrame from the list of extracted data
@@ -52,69 +68,8 @@ extracted_df = pd.DataFrame(extracted_data)
 df =extracted_df
 print(extracted_df.head())
 
-from transformers import AutoModelForTokenClassification
-from transformers import AutoTokenizer
-from transformers import pipeline
-from torch.nn import Softmax
 
 
-tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
-
-reviews = extracted_df['review']
-movie_name = extracted_df["movie_names"]
-
-model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
-
-nlp = pipeline("ner", model=model, tokenizer=tokenizer)
-text = reviews[0]
-result = movie_name[0]
-
-from transformers import BertTokenizer
-
-def tokenize_and_identify(text, model_name='bert-base-uncased'):
-    # Load the BERT tokenizer
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-
-    # Tokenize the input text
-    tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text)))
-
-    # Convert tokens to words
-    words = tokenizer.convert_tokens_to_string(tokens).split()
-
-    # Create a mapping of tokens to words
-    token_to_word_mapping = {}
-    for token, word in zip(tokens, words):
-        token_to_word_mapping[token] = word
-
-    # Create a mapping of words to tokens
-    word_to_token_mapping = {}
-    for token, word in zip(tokens, words):
-        word_to_token_mapping[word] = token
-
-    return tokens, words, token_to_word_mapping, word_to_token_mapping
-
-# Example usage:
-bert_tokens, bert_words, token_to_word_mapping, word_to_token_mapping = tokenize_and_identify(text)
-
-# Example: Get token given a word
-word_to_identify = text.split()[5]  # Replace with any word you want to find the token for
-identified_token = word_to_token_mapping.get(word_to_identify, "Word not found")
-print(f"Token corresponding to word '{word_to_identify}': {identified_token}")
-
-def get_bert_token(word, model_name='bert-base-uncased'):
-    # Load the BERT tokenizer
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-
-    # Encode the input word and get the token ID
-    token_id = tokenizer.encode(word, add_special_tokens=False)
-
-    return token_id
-
-# Example usage:
-word_to_find = "genre"
-bert_token_for_word = get_bert_token(word_to_find)
-
-print(f"BERT Token for the word '{word_to_find}': {bert_token_for_word}")
 
 # ======== Working version, do not touch ===========
 
