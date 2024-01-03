@@ -100,11 +100,16 @@ def collate_fn(batch):
     input_ids = [item['review_token'] for item in batch]
     targets = [item['movie_names_token'] for item in batch]
 
-    # Pad sequences to the length of the longest sequence in the batch for both inputs and targets
-    input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
-    targets_padded = pad_sequence(targets, batch_first=True, padding_value=0)
+    # Find the maximum length for both review and movie names
+    max_review_length = max(item.shape[0] for item in input_ids)
+    max_movie_names_length = max(item.shape[0] for item in targets)
+
+    # Pad sequences to the maximum length for both inputs and targets
+    input_ids_padded = pad_sequence([torch.cat([item, torch.zeros(max_review_length - item.shape[0])]) for item in input_ids], batch_first=True)
+    targets_padded = pad_sequence([torch.cat([item, torch.zeros(max_movie_names_length - item.shape[0])]) for item in targets], batch_first=True)
 
     return {'review_token': input_ids_padded, 'movie_names_token': targets_padded}
+
 
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, collate_fn=collate_fn)
 test_loader = DataLoader(test_dataset, batch_size=4, collate_fn=collate_fn)
@@ -120,10 +125,11 @@ class SequencePredictionModel(torch.nn.Module):
         outputs = self.bert_model(input_ids=input_ids)
         logits = self.linear(outputs.last_hidden_state)
         return logits
+    
 
 
 # Filter the training dataset
-filtered_samples = [sample for sample in train_dataset if sample['review_token'].shape[0] > 227 and sample['movie_names_token'].shape[0] > 2]
+filtered_samples = [sample for sample in train_loader if sample['review_token'].shape[0] > 227 and sample['movie_names_token'].shape[0] > 2]
 
 # Print the filtered samples
 for sample in filtered_samples:
