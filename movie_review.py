@@ -85,7 +85,6 @@ def tokenize_text(text, model_name='bert-base-uncased'):
 # Example usage:
 bert_tokens, bert_words = tokenize_text(text)
 
-print("BERT Tokens:", bert_tokens)
 print("Corresponding Words:", bert_words)
 # ======== Working version, do not touch ===========
 
