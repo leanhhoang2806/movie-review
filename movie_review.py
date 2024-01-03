@@ -101,27 +101,14 @@ X = np.array(df['review_token'].tolist())
 y = np.array(df['movie_names_token'].tolist())
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-import numpy as np
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import SimpleRNN, Dense
-from sklearn.model_selection import train_test_split
 
-# Generate some random data
-# Replace this with your actual data
-num_samples = 1000
-time_steps = 10
-input_size = 4
-output_size = 2
-
-X = np.random.rand(num_samples, time_steps, input_size)
-Y = np.random.rand(num_samples, output_size)
-
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+# Determine input_shape from X_train and output_size from y_train
+input_shape = X_train.shape[1:]  # Excludes the batch size
+output_size = y_train.shape[1]
 
 # Build the RNN model
 model = Sequential()
-model.add(SimpleRNN(units=50, activation='tanh', input_shape=(time_steps, input_size)))
+model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
 model.add(Dense(units=output_size, activation='linear'))
 
 model.compile(optimizer='adam', loss='mean_squared_error')
@@ -145,7 +132,6 @@ for i in range(5):
     print("Actual:", y_test[i])
     print("Predicted:", predictions[i])
     print()
-
 
 
 # ======== Working version, do not touch ===========
