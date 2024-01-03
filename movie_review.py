@@ -55,6 +55,7 @@ print(extracted_df.head())
 from transformers import AutoModelForTokenClassification
 from transformers import AutoTokenizer
 from transformers import pipeline
+from torch.nn import Softmax
 
 
 tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
@@ -68,9 +69,52 @@ nlp = pipeline("ner", model=model, tokenizer=tokenizer)
 text = reviews[0]
 result = movie_name[0]
 
-print(f"expected result : {result}")
-print(nlp(text))
+# Tokenize the text
+tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text)))
 
+# Load pre-trained BERT model for token classification
+model = BertForTokenClassification.from_pretrained("bert-base-uncased", num_labels=4)  # 4 labels: B-LOC, I-LOC, B-MISC, I-MISC
+
+# Convert tokens to token IDs
+token_ids = tokenizer.convert_tokens_to_ids(tokens)
+
+# Obtain predictions from the model
+with torch.no_grad():
+    outputs = model(torch.tensor([token_ids]))
+    predictions = outputs.logits
+
+# Apply softmax to get probabilities
+softmax = Softmax(dim=2)
+predictions = softmax(predictions)
+
+# Get the predicted labels for each token
+predicted_labels = torch.argmax(predictions, dim=2).numpy()[0]
+
+# Map predicted labels to entities
+id2label = {0: 'B-LOC', 1: 'I-LOC', 2: 'B-MISC', 3: 'I-MISC'}
+predicted_entities = [id2label[label] for label in predicted_labels]
+
+# Extract movie name combinations based on B-MISC and I-MISC entities
+movie_name_combinations = []
+current_entity = None
+current_movie_name = []
+
+for token, entity in zip(tokens, predicted_entities):
+    if entity in ['B-MISC', 'I-MISC']:
+        if current_entity is None:
+            current_entity = entity
+            current_movie_name = [token]
+        else:
+            current_movie_name.append(token)
+    else:
+        if current_entity is not None:
+            movie_name_combinations.append(' '.join(current_movie_name))
+            current_entity = None
+            current_movie_name = []
+
+# Print the recognized movie name combinations
+print("Recognized Movie Name Combinations:", movie_name_combinations)
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
