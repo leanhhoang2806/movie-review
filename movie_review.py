@@ -100,7 +100,7 @@ print("BERT Tokens:", bert_tokens)
 print("Corresponding Words:", bert_words)
 
 # Example: Get token given a word
-word_to_identify = "text"  # Replace with any word you want to find the token for
+word_to_identify = text[5]  # Replace with any word you want to find the token for
 identified_token = word_to_token_mapping.get(word_to_identify, "Word not found")
 print(f"Token corresponding to word '{word_to_identify}': {identified_token}")
 
