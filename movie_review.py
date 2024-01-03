@@ -151,16 +151,20 @@ for epoch in range(num_epochs):
 # Evaluate on the test set
 model.eval()
 all_preds = []
+all_targets = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
         logits = model(input_ids)
         preds = torch.argmax(logits, dim=-1)
         all_preds.append(preds)
+        all_targets.append(targets)
 
 all_preds = torch.cat(all_preds).numpy()
+all_targets = torch.cat(all_targets).numpy()
+
 # Flatten the test targets to match dimensions
-accuracy = accuracy_score(test_df['movie_names_token'].apply(lambda x: x[0]).values.flatten(), all_preds.flatten())
+accuracy = accuracy_score(all_targets.flatten(), all_preds.flatten())
 print(f'Test Accuracy: {accuracy}')
 
 # ======== Working version, do not touch ===========
