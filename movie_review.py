@@ -19,7 +19,10 @@ import os
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from itertools import chain
-
+from torch.utils.data import Dataset, DataLoader
+from transformers import BertModel, BertForSequenceClassification, BertTokenizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -62,11 +65,87 @@ for review in imdb_df['review']:
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
-df =extracted_df
+
 print(extracted_df.head())
 print(f"The percetange of extraction is : {len(extracted_df) * 100 / len(imdb_df)}")
 print(f"Training data contains {len(extracted_df)} rows")
 print(extracted_df[["review_token", "movie_names_token"]])
+
+df = extracted_df[["review_token", "movie_names_token"]]
+# Train-test split
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+
+# Define a PyTorch dataset
+class MyDataset(Dataset):
+    def __init__(self, reviews, targets):
+        self.reviews = reviews
+        self.targets = targets
+
+    def __len__(self):
+        return len(self.reviews)
+
+    def __getitem__(self, idx):
+        return {'review_token': torch.tensor(self.reviews.iloc[idx]),
+                'movie_names_token': torch.tensor(self.targets.iloc[idx])}
+
+# Instantiate the dataset and DataLoader
+train_dataset = MyDataset(train_df['review_token'], train_df['movie_names_token'])
+test_dataset = MyDataset(test_df['review_token'], test_df['movie_names_token'])
+
+train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=4)
+
+# Define the BERT model for sequence-to-sequence prediction
+class SequencePredictionModel(torch.nn.Module):
+    def __init__(self, bert_model):
+        super(SequencePredictionModel, self).__init__()
+        self.bert_model = bert_model
+        self.linear = torch.nn.Linear(bert_model.config.hidden_size, len(df['movie_names_token'][0]))
+
+    def forward(self, input_ids):
+        outputs = self.bert_model(input_ids=input_ids)
+        logits = self.linear(outputs.last_hidden_state)
+        return logits
+
+# Load the BERT model and tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+bert_model = BertModel.from_pretrained('bert-base-uncased')
+
+# Instantiate the model and set up the training loop
+model = SequencePredictionModel(bert_model)
+optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+criterion = torch.nn.CrossEntropyLoss()
+
+# Training loop
+num_epochs = 5  # Adjust based on your data
+
+for epoch in range(num_epochs):
+    model.train()
+    total_loss = 0
+    for batch in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}'):
+        input_ids, targets = batch['review_token'], batch['movie_names_token']
+        optimizer.zero_grad()
+        logits = model(input_ids)
+        loss = criterion(logits.view(-1, logits.shape[-1]), targets.view(-1))
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+
+    print(f'Epoch {epoch + 1}/{num_epochs}, Loss: {total_loss / len(train_loader)}')
+
+# Evaluate on the test set
+model.eval()
+all_preds = []
+with torch.no_grad():
+    for batch in tqdm(test_loader, desc='Evaluating'):
+        input_ids, targets = batch['review_token'], batch['movie_names_token']
+        logits = model(input_ids)
+        preds = torch.argmax(logits, dim=-1)
+        all_preds.append(preds)
+
+all_preds = torch.cat(all_preds).numpy()
+accuracy = accuracy_score(test_df['movie_names_token'].apply(lambda x: x[0]), all_preds)
+print(f'Test Accuracy: {accuracy}')
 
 
 
