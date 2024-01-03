@@ -122,9 +122,14 @@ class SequencePredictionModel(torch.nn.Module):
         return logits
 
 
-sample = train_dataset[0]
-print('Shape of review_token:', sample['review_token'].shape)
-print('Shape of movie_names_token:', sample['movie_names_token'].shape)
+# Filter the training dataset
+filtered_samples = [sample for sample in train_dataset if sample['review_token'].shape[0] > 227 and sample['movie_names_token'].shape[0] > 2]
+
+# Print the filtered samples
+for sample in filtered_samples:
+    print('Review Token Size:', sample['review_token'].shape[0])
+    print('Movie Names Token Size:', sample['movie_names_token'].shape[0])
+    print('-' * 50)
 
 # ======== Working version, do not touch ===========
 
