@@ -94,12 +94,13 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
+vocabulary_size = len(set(df['review_token'].sum())) + 1
 
 # Build the RNN model
 model = Sequential()
-model.add(Embedding(input_dim=len(set(df['review_token'].sum())) + 1, output_dim=50, input_length=max_review_length))
+model.add(Embedding(input_dim=vocabulary_size, output_dim=50, input_length=max_review_length))
 model.add(SimpleRNN(units=50, activation='tanh'))
-model.add(Dense(units=max_movie_length * len(set(df['movie_names_token'].sum())), activation='linear'))
+model.add(Dense(units=max_movie_length * vocabulary_size, activation='linear'))
 model.compile(optimizer='adam', loss='mean_squared_error')
 
 # Train the model
@@ -113,7 +114,7 @@ print(f'Mean Squared Error on Test Data: {loss}')
 predictions = model.predict(X_test)
 
 # Reshape predictions to match the original shape of y_test
-predictions = predictions.reshape(-1, max_movie_length, len(set(df['movie_names_token'].sum())))
+predictions = predictions.reshape(-1, max_movie_length, vocabulary_size)
 
 # Print some example predictions
 for i in range(5):
