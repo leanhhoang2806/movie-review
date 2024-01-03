@@ -69,6 +69,8 @@ nlp = pipeline("ner", model=model, tokenizer=tokenizer)
 text = reviews[0]
 result = movie_name[0]
 
+from transformers import BertTokenizer
+
 def tokenize_and_identify(text, model_name='bert-base-uncased'):
     # Load the BERT tokenizer
     tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -84,16 +86,24 @@ def tokenize_and_identify(text, model_name='bert-base-uncased'):
     for token, word in zip(tokens, words):
         token_to_word_mapping[token] = word
 
-    return tokens, words, token_to_word_mapping
+    # Create a mapping of words to tokens
+    word_to_token_mapping = {}
+    for token, word in zip(tokens, words):
+        word_to_token_mapping[word] = token
+
+    return tokens, words, token_to_word_mapping, word_to_token_mapping
 
 # Example usage:
-bert_tokens, bert_words, token_to_word_mapping = tokenize_and_identify(text)
+bert_tokens, bert_words, token_to_word_mapping, word_to_token_mapping = tokenize_and_identify(text)
 
+print("BERT Tokens:", bert_tokens)
+print("Corresponding Words:", bert_words)
 
-# Example: Identify word using token
-token_to_identify = bert_tokens[3]  # Replace with any token you want to identify
-identified_word = token_to_word_mapping.get(token_to_identify, "Token not found")
-print(f"Word corresponding to token '{token_to_identify}': {identified_word}")
+# Example: Get token given a word
+word_to_identify = "text"  # Replace with any word you want to find the token for
+identified_token = word_to_token_mapping.get(word_to_identify, "Word not found")
+print(f"Token corresponding to word '{word_to_identify}': {identified_token}")
+
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
