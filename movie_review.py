@@ -23,6 +23,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import BertModel, BertForSequenceClassification, BertTokenizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from torch.nn.utils.rnn import pad_sequence
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -72,6 +73,8 @@ print(f"Training data contains {len(extracted_df)} rows")
 print(extracted_df[["review_token", "movie_names_token"]])
 
 df = extracted_df[["review_token", "movie_names_token"]]
+
+
 # Train-test split
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
 
@@ -124,8 +127,10 @@ for epoch in range(num_epochs):
     total_loss = 0
     for batch in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
+        # Use pad_sequence to pad sequences to the same length
+        input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
         optimizer.zero_grad()
-        logits = model(input_ids)
+        logits = model(input_ids_padded)
         loss = criterion(logits.view(-1, logits.shape[-1]), targets.view(-1))
         loss.backward()
         optimizer.step()
@@ -139,16 +144,14 @@ all_preds = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
         input_ids, targets = batch['review_token'], batch['movie_names_token']
-        logits = model(input_ids)
+        input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
+        logits = model(input_ids_padded)
         preds = torch.argmax(logits, dim=-1)
         all_preds.append(preds)
 
 all_preds = torch.cat(all_preds).numpy()
 accuracy = accuracy_score(test_df['movie_names_token'].apply(lambda x: x[0]), all_preds)
 print(f'Test Accuracy: {accuracy}')
-
-
-
 
 # ======== Working version, do not touch ===========
 
