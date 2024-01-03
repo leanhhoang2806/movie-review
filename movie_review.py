@@ -86,7 +86,7 @@ max_movie_length = max(df['movie_names_token'].apply(len))
 # Apply padding to the DataFrame
 df['review_token'] = df['review_token'].apply(lambda x: pad_tokens(x, max_review_length))
 df['movie_names_token'] = df['movie_names_token'].apply(lambda x: pad_tokens(x, max_movie_length))
-
+print(df.head())
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(
     np.array(df['review_token'].tolist()),
@@ -94,6 +94,8 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
+
+
 
 # ======== Working version, do not touch ===========
 
