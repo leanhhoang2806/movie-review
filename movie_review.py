@@ -97,7 +97,7 @@ def tokenize_and_identify(text, model_name='bert-base-uncased'):
 bert_tokens, bert_words, token_to_word_mapping, word_to_token_mapping = tokenize_and_identify(text)
 
 # Example: Get token given a word
-word_to_identify = text[5]  # Replace with any word you want to find the token for
+word_to_identify = text.split()[5]  # Replace with any word you want to find the token for
 identified_token = word_to_token_mapping.get(word_to_identify, "Word not found")
 print(f"Token corresponding to word '{word_to_identify}': {identified_token}")
 
