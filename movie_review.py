@@ -24,6 +24,7 @@ from transformers import BertModel, BertForSequenceClassification, BertTokenizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from torch.nn.utils.rnn import pad_sequence
+from tensorflow.keras.layers import Embedding, SimpleRNN, Dense, LSTM
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -74,11 +75,26 @@ print(extracted_df[["review_token", "movie_names_token"]])
 
 df = extracted_df[["review_token", "movie_names_token"]]
 
+# Padding function
+def pad_tokens(tokens_list, max_length):
+    return pad_sequences([tokens_list], maxlen=max_length, padding='post', truncating='post')[0]
 
-# Train-test split
-train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+# Find the maximum lengths
+max_review_length = max(df['review_token'].apply(len))
+max_movie_length = max(df['movie_names_token'].apply(len))
 
-print(train_df.shape())
+# Apply padding to the DataFrame
+df['review_token'] = df['review_token'].apply(lambda x: pad_tokens(x, max_review_length))
+df['movie_names_token'] = df['movie_names_token'].apply(lambda x: pad_tokens(x, max_movie_length))
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(
+    np.array(df['review_token'].tolist()),
+    np.array(df['movie_names_token'].tolist()),
+    test_size=0.2,
+    random_state=42
+)
+
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
