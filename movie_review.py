@@ -68,10 +68,9 @@ model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
 nlp = pipeline("ner", model=model, tokenizer=tokenizer)
 text = reviews[0]
 result = movie_name[0]
-
 # Tokenize the text
 tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text)))
+tokens = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text, max_length=512, truncation=True)))
 
 # Load pre-trained BERT model for token classification
 model = BertForTokenClassification.from_pretrained("bert-base-uncased", num_labels=4)  # 4 labels: B-LOC, I-LOC, B-MISC, I-MISC
@@ -79,10 +78,19 @@ model = BertForTokenClassification.from_pretrained("bert-base-uncased", num_labe
 # Convert tokens to token IDs
 token_ids = tokenizer.convert_tokens_to_ids(tokens)
 
-# Obtain predictions from the model
+# Split the input into chunks of maximum 512 tokens
+max_length = 512
+token_ids_chunks = [token_ids[i:i + max_length] for i in range(0, len(token_ids), max_length)]
+
+# Obtain predictions from the model for each chunk
+predictions_list = []
 with torch.no_grad():
-    outputs = model(torch.tensor([token_ids]))
-    predictions = outputs.logits
+    for chunk in token_ids_chunks:
+        outputs = model(torch.tensor([chunk]))
+        predictions_list.append(outputs.logits)
+
+# Concatenate predictions from different chunks
+predictions = torch.cat(predictions_list, dim=1)
 
 # Apply softmax to get probabilities
 softmax = Softmax(dim=2)
