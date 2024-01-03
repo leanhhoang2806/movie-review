@@ -60,12 +60,15 @@ from transformers import pipeline
 tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
 
 reviews = extracted_df['review']
+movie_name = extracted_df["movie_names"]
 
 model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
 
 nlp = pipeline("ner", model=model, tokenizer=tokenizer)
 text = reviews[0]
+result = movie_name[0]
 
+print(f"expected result : {result}")
 print(nlp(text))
 
 # ======== Working version, do not touch ===========
