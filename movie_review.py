@@ -102,7 +102,7 @@ def collate_fn(batch):
 
     # Pad sequences to the length of the longest sequence in the batch for both inputs and targets
     input_ids_padded = pad_sequence(input_ids, batch_first=True, padding_value=0)
-    targets_padded = pad_sequence(targets, batch_first=True, padding_value=0)
+    targets_padded = pad_sequence(targets, batch_first=True, padding_value=-100)
 
     return {'review_token': input_ids_padded, 'movie_names_token': targets_padded}
 
@@ -128,7 +128,7 @@ bert_model = BertModel.from_pretrained('bert-base-uncased')
 # Instantiate the model and set up the training loop
 model = SequencePredictionModel(bert_model)
 optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
-criterion = torch.nn.CrossEntropyLoss()
+criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
 
 # Training loop
 num_epochs = 5  # Adjust based on your data
@@ -154,19 +154,7 @@ all_preds = []
 all_targets = []
 with torch.no_grad():
     for batch in tqdm(test_loader, desc='Evaluating'):
-        input_ids, targets = batch['review_token'], batch['movie_names_token']
-        logits = model(input_ids)
-        preds = torch.argmax(logits, dim=-1)
-        all_preds.extend(preds.tolist())
-        all_targets.extend(targets.tolist())
-
-# Flatten both predictions and targets
-all_preds_flat = [item for sublist in all_preds for item in sublist]
-all_targets_flat = [item for sublist in all_targets for item in sublist]
-
-# Compute accuracy
-accuracy = accuracy_score(all_targets_flat, all_preds_flat)
-print(f'Test Accuracy: {accuracy}')
+        input_ids, targets = batch['review_token'], batch['movie_names_token
 
 # ======== Working version, do not touch ===========
 
