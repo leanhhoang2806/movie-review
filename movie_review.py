@@ -157,14 +157,15 @@ with torch.no_grad():
         input_ids, targets = batch['review_token'], batch['movie_names_token']
         logits = model(input_ids)
         preds = torch.argmax(logits, dim=-1)
-        all_preds.append(preds)
-        all_targets.append(targets)
+        all_preds.extend(preds.tolist())
+        all_targets.extend(targets.tolist())
 
-all_preds = torch.cat(all_preds).numpy()
-all_targets = torch.cat(all_targets).numpy()
+# Flatten both predictions and targets
+all_preds_flat = [item for sublist in all_preds for item in sublist]
+all_targets_flat = [item for sublist in all_targets for item in sublist]
 
-# Flatten the test targets to match dimensions
-accuracy = accuracy_score(all_targets.flatten(), all_preds.flatten())
+# Compute accuracy
+accuracy = accuracy_score(all_targets_flat, all_preds_flat)
 print(f'Test Accuracy: {accuracy}')
 
 # ======== Working version, do not touch ===========
