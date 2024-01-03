@@ -127,16 +127,13 @@ class SequencePredictionModel(torch.nn.Module):
         return logits
     
 
+for batch in train_loader:
+    review_token_shape = batch['review_token'].shape
+    movie_names_token_shape = batch['movie_names_token'].shape
 
-# Filter the training dataset
-filtered_samples = [sample for sample in train_loader if sample['review_token'].shape[0] > 227 and sample['movie_names_token'].shape[0] > 2]
-
-# Print the filtered samples
-for sample in filtered_samples:
-    print('Review Token Size:', sample['review_token'].shape[0])
-    print('Movie Names Token Size:', sample['movie_names_token'].shape[0])
+    print(f'Review Token Shape: {review_token_shape}')
+    print(f'Movie Names Token Shape: {movie_names_token_shape}')
     print('-' * 50)
-
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
