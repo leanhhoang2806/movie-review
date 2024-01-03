@@ -53,10 +53,20 @@ df =extracted_df
 print(extracted_df.head())
 
 from transformers import AutoModelForTokenClassification
+from transformers import AutoTokenizer
+from transformers import pipeline
+
+
+tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
 
 reviews = extracted_df['review']
 
 model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
+
+nlp = pipeline("ner", model=model, tokenizer=tokenizer)
+text = reviews[0]
+
+print(nlp(text))
 
 # ======== Working version, do not touch ===========
 
