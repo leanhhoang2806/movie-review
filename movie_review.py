@@ -89,8 +89,6 @@ def tokenize_and_identify(text, model_name='bert-base-uncased'):
 # Example usage:
 bert_tokens, bert_words, token_to_word_mapping = tokenize_and_identify(text)
 
-print("BERT Tokens:", bert_tokens)
-print("Corresponding Words:", bert_words)
 
 # Example: Identify word using token
 token_to_identify = bert_tokens[3]  # Replace with any token you want to identify
