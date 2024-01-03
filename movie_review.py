@@ -101,6 +101,20 @@ word_to_identify = text.split()[5]  # Replace with any word you want to find the
 identified_token = word_to_token_mapping.get(word_to_identify, "Word not found")
 print(f"Token corresponding to word '{word_to_identify}': {identified_token}")
 
+def get_bert_token(word, model_name='bert-base-uncased'):
+    # Load the BERT tokenizer
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+
+    # Tokenize the input word
+    token = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(word)))
+
+    return token[0] if token else None
+
+# Example usage:
+bert_token_for_word = get_bert_token(word_to_identify)
+
+print(f"BERT Token for the word '{word_to_identify}': {bert_token_for_word}")
+
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
