@@ -50,7 +50,7 @@ for review in imdb_df['review']:
     # Append the review and cleaned text to the list if the list is not empty
     if cleaned_names and len(cleaned_names) == 1:
         corrected_name = cleaned_names[0].strip()
-        if len(corrected_name) == 2:
+        if len(corrected_name)  > 2:
             # Get BERT token for movie name
             movie_name_tokens = [get_bert_token(token) for token in corrected_name.split()]
 
