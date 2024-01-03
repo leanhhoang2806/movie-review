@@ -63,6 +63,8 @@ extracted_df = pd.DataFrame(extracted_data)
 df =extracted_df
 print(extracted_df.head())
 print(f"The percetange of extraction is : {len(extracted_df) * 100 / len(imdb_df)}")
+print(f"Training data contains {len(extracted_df)} rows")
+print(extracted_df[["review_token", "movie_names_token"]])
 
 
 
