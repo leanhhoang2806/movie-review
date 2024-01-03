@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import string
+import numpy as np
 from itertools import chain
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
