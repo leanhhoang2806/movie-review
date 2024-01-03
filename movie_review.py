@@ -18,6 +18,7 @@ import torch
 import os
 from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
+from itertools import chain
 
 
 # Load the IMDb dataset
@@ -52,11 +53,12 @@ for review in imdb_df['review']:
         corrected_name = cleaned_names[0].strip()
         if len(corrected_name.split())  == 2:
             # Get BERT token for movie name
-            movie_name_tokens = [get_bert_token(token) for token in corrected_name.split()]
+            movie_name_tokens_nested = [get_bert_token(token) for token in corrected_name.split()]
+            movie_name_tokens_flatten = list(chain(*movie_name_tokens_nested))
 
             # Get BERT token for review
             review_tokens = get_bert_token(review)
-            extracted_data.append({'review_token': review_tokens, 'movie_names_token': movie_name_tokens, "review": review, "movie_names": corrected_name})
+            extracted_data.append({'review_token': review_tokens, 'movie_names_token': movie_name_tokens_flatten, "review": review, "movie_names": corrected_name})
 
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
