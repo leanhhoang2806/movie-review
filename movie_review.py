@@ -70,33 +70,35 @@ X_train, X_test, y_train, y_test = train_test_split(
 # Determine input_shape from X_train and output_size from y_train
 input_shape = X_train.shape[1:]  # Excludes the batch size
 output_size = y_train.shape[1]
+print(input_shape)
+print(output_size)
 
-# Build the RNN model
-model = Sequential()
-model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
-model.add(Dense(units=output_size, activation='linear'))
+# # Build the RNN model
+# model = Sequential()
+# model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
+# model.add(Dense(units=output_size, activation='linear'))
 
-model.compile(optimizer='adam', loss='mean_squared_error')
+# model.compile(optimizer='adam', loss='mean_squared_error')
 
-# Print model summary for debugging
-model.summary()
+# # Print model summary for debugging
+# model.summary()
 
-# Train the model
-history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+# # Train the model
+# history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
 
-# Evaluate the model
-loss = model.evaluate(X_test, y_test)
-print(f'Mean Squared Error on Test Data: {loss}')
+# # Evaluate the model
+# loss = model.evaluate(X_test, y_test)
+# print(f'Mean Squared Error on Test Data: {loss}')
 
-# Make predictions
-predictions = model.predict(X_test)
+# # Make predictions
+# predictions = model.predict(X_test)
 
-# Print some example predictions
-for i in range(5):
-    print(f"Example {i + 1}:")
-    print("Actual:", y_test[i])
-    print("Predicted:", predictions[i])
-    print()
+# # Print some example predictions
+# for i in range(5):
+#     print(f"Example {i + 1}:")
+#     print("Actual:", y_test[i])
+#     print("Predicted:", predictions[i])
+#     print()
 
 
 
