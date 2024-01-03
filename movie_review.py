@@ -68,10 +68,8 @@ for review in imdb_df['review']:
 # Create a new DataFrame from the list of extracted data
 extracted_df = pd.DataFrame(extracted_data)
 
-print(extracted_df.head())
 print(f"The percetange of extraction is : {len(extracted_df) * 100 / len(imdb_df)}")
 print(f"Training data contains {len(extracted_df)} rows")
-print(extracted_df[["review_token", "movie_names_token"]])
 
 df = extracted_df[["review_token", "movie_names_token"]]
 
@@ -94,7 +92,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size=0.2,
     random_state=42
 )
-vocabulary_size = len(set(df['review_token'].sum())) + 1
 
 # Split the data into training and testing sets
 X = np.array(df['review_token'].tolist())
