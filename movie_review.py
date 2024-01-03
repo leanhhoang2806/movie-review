@@ -52,77 +52,11 @@ extracted_df = pd.DataFrame(extracted_data)
 df =extracted_df
 print(extracted_df.head())
 
-from torch.utils.data import TensorDataset, DataLoader
+from transformers import AutoModelForTokenClassification
 
-# Define the model and tokenizer
-model_name = 'bert-base-uncased'
-tokenizer = BertTokenizer.from_pretrained(model_name)
-model = BertForTokenClassification.from_pretrained(model_name, num_labels=2)
-# Sample data (you need to replace this with your actual dataset)
-texts = ["The movie Titanic is a classic.", "Inception is a mind-bending film."]
+reviews = extracted_df['review']
 
-# Prepare the data
-tokenized_texts = [tokenizer.tokenize(tokenizer.decode(tokenizer.encode(text))) for text in texts]
-input_ids = [tokenizer.convert_tokens_to_ids(tokenized_text) for tokenized_text in tokenized_texts]
-attention_masks = [[1] * len(input_id) for input_id in input_ids]
-input_ids = torch.tensor(input_ids)
-attention_masks = torch.tensor(attention_masks)
-labels = []
-for i, (tokenized_text, input_id) in enumerate(zip(tokenized_texts, input_ids)):
-    # Convert labels to 1 for movie name tokens, 0 otherwise
-    label = [1 if tokenizer.decode(input_id[j]) == tokenized_text[j] else 0 for j in range(len(tokenized_text))]
-    labels.append(label)
-
-labels = torch.tensor(labels)
-
-dataset = TensorDataset(input_ids, attention_masks, labels)
-
-# Define data loader
-batch_size = 2
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-
-# Training
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-optimizer = torch.optim.AdamW(params=model.parameters(), lr=2e-5)
-
-for epoch in range(3):  # Adjust the number of epochs as needed
-    model.train()
-    total_loss = 0
-
-    for batch in dataloader:
-        batch = tuple(t.to(device) for t in batch)
-        inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[2]}
-
-        optimizer.zero_grad()
-        outputs = model(**inputs)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
-
-        total_loss += loss.item()
-
-    average_loss = total_loss / len(dataloader)
-    print(f"Epoch {epoch + 1}, Average Loss: {average_loss}")
-
-# Inference
-model.eval()
-with torch.no_grad():
-    example_text = "I enjoyed watching Titanic last night."
-    tokenized_text = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(example_text)))
-    input_ids = torch.tensor([tokenizer.convert_tokens_to_ids(tokenized_text)])
-    attention_mask = torch.tensor([[1] * len(input_ids[0])])
-
-    input_ids = input_ids.to(device)
-    attention_mask = attention_mask.to(device)
-
-    outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-    predictions = torch.argmax(outputs.logits, dim=2)
-
-    # Extract movie names based on predictions
-    movie_names = [token for token, label in zip(tokenized_text, predictions[0].tolist()) if label == 1]
-    print("Extracted Movie Names:", movie_names)
+model = AutoModelForTokenClassification.from_pretrained("dslim/bert-base-NER")
 
 # ======== Working version, do not touch ===========
 
