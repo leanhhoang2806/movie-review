@@ -95,6 +95,33 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
+# Build the RNN model
+model = Sequential()
+model.add(Embedding(input_dim=len(set(df['review_token'].sum())) + 1, output_dim=50, input_length=max_review_length))
+model.add(SimpleRNN(units=50, activation='tanh'))
+model.add(Dense(units=max_movie_length * len(set(df['movie_names_token'].sum())), activation='linear'))
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train, y_train.flatten(), epochs=10, batch_size=32, validation_split=0.2)
+
+# Evaluate the model
+loss = model.evaluate(X_test, y_test.flatten())
+print(f'Mean Squared Error on Test Data: {loss}')
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# Reshape predictions to match the original shape of y_test
+predictions = predictions.reshape(-1, max_movie_length, len(set(df['movie_names_token'].sum())))
+
+# Print some example predictions
+for i in range(5):
+    print(f"Example {i + 1}:")
+    print("Actual:", y_test[i])
+    print("Predicted:", predictions[i])
+    print()
+
 
 
 # ======== Working version, do not touch ===========
