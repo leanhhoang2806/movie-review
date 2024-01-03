@@ -105,15 +105,16 @@ def get_bert_token(word, model_name='bert-base-uncased'):
     # Load the BERT tokenizer
     tokenizer = BertTokenizer.from_pretrained(model_name)
 
-    # Tokenize the input word
-    token = tokenizer.tokenize(tokenizer.decode(tokenizer.encode(word)))
+    # Encode the input word and get the token ID
+    token_id = tokenizer.encode(word, add_special_tokens=False)
 
-    return token[0] if token else None
+    return token_id
 
 # Example usage:
-bert_token_for_word = get_bert_token(word_to_identify)
+word_to_find = "genre"
+bert_token_for_word = get_bert_token(word_to_find)
 
-print(f"BERT Token for the word '{word_to_identify}': {bert_token_for_word}")
+print(f"BERT Token for the word '{word_to_find}': {bert_token_for_word}")
 
 # ======== Working version, do not touch ===========
 
