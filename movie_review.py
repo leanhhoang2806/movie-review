@@ -123,6 +123,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
+layer_size = 512
 
 
 # Split the data into training and testing sets
@@ -130,7 +131,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_
 
 # Build the model with Multi-Head layer in the first layer
 model = tf.keras.Sequential([
-    MultiHeadAttention(head_size=64, num_heads=2, dropout=0.1),
+    MultiHeadAttention(head_size=layer_size, num_heads=2, dropout=0.1),
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(output_size, activation='softmax')  # Adjust based on your output size
 ])
