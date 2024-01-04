@@ -68,12 +68,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Determine input_shape from X_train and output_size from y_train
-input_shape = (X_train.shape[1], X_train.shape[2])  # Tuple representing the shape of a single time step
+# Determine input_shape from X_train and output_size from y_train
+input_shape = (X_train.shape[1],)  # Tuple representing the shape of a single time step
 output_size = y_train.shape[1]
 
-# Build the RNN model
+# Build the feedforward neural network model
 model = Sequential()
-model.add(SimpleRNN(units=50, activation='tanh', input_shape=input_shape))
+model.add(Dense(units=50, activation='relu', input_shape=input_shape))
 model.add(Dense(units=output_size, activation='linear'))
 
 model.compile(optimizer='adam', loss='mean_squared_error')
