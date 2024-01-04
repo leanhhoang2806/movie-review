@@ -69,11 +69,12 @@ import tensorflow as tf
 
 
 class MultiHeadAttention(tf.keras.layers.Layer):
-    def __init__(self, head_size, num_heads):
+    def __init__(self, head_size, num_heads, dropout=0.1):
         super(MultiHeadAttention, self).__init__()
         self.head_size = head_size
         self.num_heads = num_heads
         self.depth = head_size * num_heads
+        self.dropout = dropout
 
         self.query_dense = tf.keras.layers.Dense(self.depth)
         self.key_dense = tf.keras.layers.Dense(self.depth)
@@ -85,7 +86,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         inputs = tf.reshape(inputs, (batch_size, -1, self.num_heads, self.head_size))
         return tf.transpose(inputs, perm=[0, 2, 1, 3])
 
-    def call(self, inputs):
+    def call(self, inputs, training=False):
         batch_size = tf.shape(inputs)[0]
 
         query = self.query_dense(inputs)
@@ -102,6 +103,10 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.depth))
 
         output = self.combine_heads(concat_attention)
+
+        if training and self.dropout > 0.0:
+            output = tf.keras.layers.Dropout(rate=self.dropout)(output, training=training)
+
         return output
 
     def scaled_dot_product_attention(self, query, key, value):
@@ -112,6 +117,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(logits, axis=-1)
         output = tf.matmul(attention_weights, value)
         return output, attention_weights
+
+
+
 X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
