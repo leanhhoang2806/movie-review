@@ -13,6 +13,7 @@ from transformers import AdamW
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 import itertools
+from tqdm import tqdm
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -164,7 +165,7 @@ best_model = None
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-for params in itertools.product(*param_grid.values()):
+for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
     model = build_model(X.shape[1], output_size, *params)
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -173,7 +174,7 @@ for params in itertools.product(*param_grid.values()):
 
     _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
-    print(f'Model Accuracy for {params}: {accuracy}')
+    tqdm.write(f'Model Accuracy for {params}: {accuracy}')
 
     if accuracy > best_accuracy:
         best_accuracy = accuracy
