@@ -68,10 +68,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # Determine input_shape from X_train and output_size from y_train
-input_shape = X_train.shape[1]  # Excludes the batch size
+input_shape = (X_train.shape[1], X_train.shape[2])  # Tuple representing the shape of a single time step
 output_size = y_train.shape[1]
-print(f"training input shape {input_shape}")
-print(f"expected out put tensor is {output_size}")
 
 # Build the RNN model
 model = Sequential()
@@ -86,19 +84,19 @@ model.summary()
 # Train the model
 history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
 
-# # Evaluate the model
-# loss = model.evaluate(X_test, y_test)
-# print(f'Mean Squared Error on Test Data: {loss}')
+# Evaluate the model
+loss = model.evaluate(X_test, y_test)
+print(f'Mean Squared Error on Test Data: {loss}')
 
-# # Make predictions
-# predictions = model.predict(X_test)
+# Make predictions
+predictions = model.predict(X_test)
 
-# # Print some example predictions
-# for i in range(5):
-#     print(f"Example {i + 1}:")
-#     print("Actual:", y_test[i])
-#     print("Predicted:", predictions[i])
-#     print()
+# Print some example predictions
+for i in range(5):
+    print(f"Example {i + 1}:")
+    print("Actual:", y_test[i])
+    print("Predicted:", predictions[i])
+    print()
 
 
 
