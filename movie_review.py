@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from transformers import BertTokenizer
 from transformers import BertTokenizer, BertForSequenceClassification
 from transformers import AdamW
-from tensorflow.keras.layers import Input, Dense, LayerNormalization
+from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 
 # Load the IMDb dataset
@@ -133,11 +133,11 @@ def build_model(input_shape, output_size):
     
     # Add Multi-Head Attention
     attention = MultiHeadAttention(d_model=64, num_heads=4)({
-        'query': x,
-        'key': x,
-        'value': x
+        'query': tf.expand_dims(x, 1),
+        'key': tf.expand_dims(x, 1),
+        'value': tf.expand_dims(x, 1)
     })
-    x = LayerNormalization(epsilon=1e-6)(x + attention)
+    x = LayerNormalization(epsilon=1e-6)(x + Flatten()(attention))
     
     x = Dense(output_size, activation='softmax')(x)
 
