@@ -64,35 +64,60 @@ df = extracted_df
 
 
 
-import torch
-import transformers
-from transformers import BertTokenizer, BertForTokenClassification
+import tensorflow as tf
+from tensorflow.keras.layers import Embedding, LSTM, Dense
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-# Load the BERT tokenizer
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Input text
+input_text = df['review'][0]
 
-# Load the BERT model
-model = BertForTokenClassification.from_pretrained('bert-base-uncased')
+# Output text (target for training, for simplicity using the same text)
+output_text = df['movie_names'][0]
 
-# Tokenize the text
-text = extracted_df['review'][0] # Replace with the actual text you want to tokenize
-print(f"The question is: {text} ")
-tokenized_input = tokenizer.encode_plus(text, padding=True, truncation=True, return_tensors="pt")
+# Tokenize the input and output texts
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([input_text, output_text])
+total_words = len(tokenizer.word_index) + 1
 
-# Make a prediction
-with torch.no_grad():
-    outputs = model(**tokenized_input)
-predictions = outputs.logits
+# Create input sequences
+input_sequences = tokenizer.texts_to_sequences([input_text])[0]
 
-# Decode the predictions
-predicted_labels = torch.argmax(predictions, dim=2)
-predicted_words = [tokenizer.decode(token.item()) for token in predicted_labels[0]]
+# Create input and output sequences for training
+X = []
+y = []
+for i in range(1, len(input_sequences)):
+    input_sequence = input_sequences[:i+1]
+    X.append(input_sequence[:-1])
+    y.append(input_sequence[-1])
 
-# Concatenate predicted words to check for "Cold Mountain"
-predicted_phrase = " ".join(predicted_words)
+X = pad_sequences(X)
+y = tf.keras.utils.to_categorical(y, num_classes=total_words)
 
-# Print the results
-print("Predicted phrase:", predicted_phrase)
+# Build the model
+model = tf.keras.Sequential([
+    Embedding(total_words, 50, input_length=X.shape[1]),
+    LSTM(100),
+    Dense(total_words, activation='softmax')
+])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model (for simplicity, using the same input and output text)
+model.fit(X, y, epochs=100, verbose=1)
+
+# Generate text using the trained model
+input_sequence = input_sequences[:10]  # Use the first 10 words as input
+for _ in range(20):
+    padded_input_sequence = pad_sequences([input_sequence], maxlen=X.shape[1])
+    predicted_word_index = model.predict_classes(padded_input_sequence, verbose=0)
+    predicted_word = tokenizer.index_word[predicted_word_index[0]]
+    print(predicted_word, end=' ')
+    input_sequence.append(predicted_word_index[0])
+
+# Output:
+# movie... (the rest of the text) ...terrible repercussions altogether. War movie... (the rest of the text) ...terrible repercussions altogether.
+
 
 
 
