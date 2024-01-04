@@ -67,7 +67,51 @@ print(df.head())
 
 import tensorflow as tf
 
-from tensorflow_addons.layers import MultiHeadAttention
+
+class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, head_size, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        self.head_size = head_size
+        self.num_heads = num_heads
+        self.depth = head_size * num_heads
+
+        self.query_dense = tf.keras.layers.Dense(self.depth)
+        self.key_dense = tf.keras.layers.Dense(self.depth)
+        self.value_dense = tf.keras.layers.Dense(self.depth)
+
+        self.combine_heads = tf.keras.layers.Dense(self.depth)
+
+    def split_heads(self, inputs, batch_size):
+        inputs = tf.reshape(inputs, (batch_size, -1, self.num_heads, self.head_size))
+        return tf.transpose(inputs, perm=[0, 2, 1, 3])
+
+    def call(self, inputs):
+        batch_size = tf.shape(inputs)[0]
+
+        query = self.query_dense(inputs)
+        key = self.key_dense(inputs)
+        value = self.value_dense(inputs)
+
+        query = self.split_heads(query, batch_size)
+        key = self.split_heads(key, batch_size)
+        value = self.split_heads(value, batch_size)
+
+        scaled_attention, attention_weights = self.scaled_dot_product_attention(query, key, value)
+
+        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
+        concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.depth))
+
+        output = self.combine_heads(concat_attention)
+        return output
+
+    def scaled_dot_product_attention(self, query, key, value):
+        matmul_qk = tf.matmul(query, key, transpose_b=True)
+        depth = tf.cast(tf.shape(key)[-1], tf.float32)
+        logits = matmul_qk / tf.math.sqrt(depth)
+
+        attention_weights = tf.nn.softmax(logits, axis=-1)
+        output = tf.matmul(attention_weights, value)
+        return output, attention_weights
 X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
