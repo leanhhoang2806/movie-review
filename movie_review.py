@@ -109,6 +109,8 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         # Flatten the output before passing to the Dense layer
         output = tf.keras.layers.Flatten()(output)
+        # Reshape the output to ensure it's 2D
+        output = tf.keras.layers.Reshape((1, self.depth))(output)
 
         return output
 
