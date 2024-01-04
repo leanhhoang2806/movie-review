@@ -77,18 +77,22 @@ model = BertForTokenClassification.from_pretrained('bert-base-uncased')
 # Tokenize the text
 text = extracted_df['review'][0] # Replace with the actual text you want to tokenize
 print(f"The question is: {text} ")
-tokenized_sentence = tokenizer.encode_plus(text, padding=True, truncation=True, max_length=50, add_special_tokens=True, return_tensors="pt")
+tokenized_input = tokenizer.encode_plus(text, padding=True, truncation=True, return_tensors="pt")
 
 # Make a prediction
-outputs = model(**tokenized_sentence)
+with torch.no_grad():
+    outputs = model(**tokenized_input)
 predictions = outputs.logits
 
 # Decode the predictions
-labels = predictions.argmax(dim=-1)
+predicted_labels = torch.argmax(predictions, dim=2)
+predicted_words = [tokenizer.decode(token.item()) for token in predicted_labels[0]]
+
+# Concatenate predicted words to check for "Cold Mountain"
+predicted_phrase = " ".join(predicted_words)
 
 # Print the results
-for token, label in zip(tokenized_sentence['input_ids'][0], labels[0]):
-    print(tokenizer.decode([token]), label.item())
+print("Predicted phrase:", predicted_phrase)
 
 
 
