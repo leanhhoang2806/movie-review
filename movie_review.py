@@ -158,6 +158,10 @@ param_grid = {
     'num_heads': [2, 4, 8],
 }
 
+# Set batch size and accumulation steps
+batch_size = 32
+accumulation_steps = 4  # Accumulate gradients over 4 mini-batches
+
 # Perform a grid search
 best_accuracy = 0
 best_model = None
@@ -169,6 +173,20 @@ for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itert
     model = build_model(X.shape[1], output_size, *params)
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+     # Split the data into batches
+    for i in range(0, len(X_train), batch_size * accumulation_steps):
+        X_batch = X_train[i:i + batch_size * accumulation_steps]
+        y_batch = y_train[i:i + batch_size * accumulation_steps]
+
+        # Compute gradients over multiple mini-batches
+        with tf.GradientTape() as tape:
+            y_pred = model(X_batch)
+            loss = tf.keras.losses.categorical_crossentropy(y_batch, y_pred)
+
+        # Accumulate gradients
+        gradients = tape.gradient(loss, model.trainable_variables)
+        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
 
     model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
 
