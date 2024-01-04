@@ -66,79 +66,20 @@ print(df.head())
 
 
 import tensorflow as tf
-
-
-class MultiHeadAttention(tf.keras.layers.Layer):
-    def __init__(self, head_size, num_heads, dropout=0.1):
-        super(MultiHeadAttention, self).__init__()
-        self.head_size = head_size
-        self.num_heads = num_heads
-        self.depth = head_size * num_heads
-        self.dropout = dropout
-
-        self.query_dense = tf.keras.layers.Dense(self.depth)
-        self.key_dense = tf.keras.layers.Dense(self.depth)
-        self.value_dense = tf.keras.layers.Dense(self.depth)
-
-        self.combine_heads = tf.keras.layers.Dense(self.depth)
-
-    def split_heads(self, inputs, batch_size):
-        inputs = tf.reshape(inputs, (batch_size, -1, self.num_heads, self.head_size))
-        return tf.transpose(inputs, perm=[0, 2, 1, 3])
-
-    def call(self, inputs, training=False):
-        batch_size = tf.shape(inputs)[0]
-
-        query = self.query_dense(inputs)
-        key = self.key_dense(inputs)
-        value = self.value_dense(inputs)
-
-        query = self.split_heads(query, batch_size)
-        key = self.split_heads(key, batch_size)
-        value = self.split_heads(value, batch_size)
-
-        scaled_attention, attention_weights = self.scaled_dot_product_attention(query, key, value)
-
-        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
-        concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.depth))
-
-        output = self.combine_heads(concat_attention)
-
-        if training and self.dropout > 0.0:
-            output = tf.keras.layers.Dropout(rate=self.dropout)(output, training=training)
-
-        return output
-
-    def scaled_dot_product_attention(self, query, key, value):
-        matmul_qk = tf.matmul(query, key, transpose_b=True)
-        depth = tf.cast(tf.shape(key)[-1], tf.float32)
-        logits = matmul_qk / tf.math.sqrt(depth)
-
-        attention_weights = tf.nn.softmax(logits, axis=-1)
-        output = tf.matmul(attention_weights, value)
-        return output, attention_weights
-
-
-
 X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
-layer_size = 512
 
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# Build the model with Multi-Head layer in the first layer
+# Build the model
 model = tf.keras.Sequential([
-    MultiHeadAttention(head_size=layer_size, num_heads=2, dropout=0.1),
-    tf.keras.layers.GlobalAveragePooling1D(),
-    tf.keras.layers.Dense(layer_size, activation='relu'),
+    tf.keras.layers.Input(shape=(X.shape[1],)),
+    tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(output_size, activation='softmax')  # Adjust based on your output size
 ])
-
-# Build the model explicitly
-model.build(input_shape=(X_train.shape[1],))
 
 # Compile the model
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
