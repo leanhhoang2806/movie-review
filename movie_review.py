@@ -65,6 +65,35 @@ df = extracted_df[['review_token', 'movie_names_token']]
 print(df.head())
 
 
+import tensorflow as tf
+X = np.array(df['review_token'].tolist())
+Y = np.array(df['movie_names_token'].tolist())
+
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+# Build the model
+model = tf.keras.Sequential([
+    tf.keras.layers.Input(shape=(X.shape[1],)),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dense(Y.shape[1], activation='softmax')  # Adjust based on your output size
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Print model summary
+model.summary()
+
+# Train the model
+model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
+
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print(f'Model Accuracy: {accuracy}')
+
+
 # ======== Working version, do not touch ===========
 
 # # Assuming 'train_data' is your training dataset with reviews and extracted movie names
