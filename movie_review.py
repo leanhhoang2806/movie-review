@@ -151,8 +151,8 @@ def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, 
 
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
-    'num_layers': [1, 2, 3],
-    'layer_size': [32, 64, 128],
+    'num_layers': [2, 4 , 6, 8, 10],
+    'layer_size': [32, 64, 128, 256, 512, 1024, 2048],
     'dropout_rate': [0.2, 0.5],
     'num_heads': [2, 4, 8],
 }
