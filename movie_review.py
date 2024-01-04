@@ -128,12 +128,15 @@ output_size = Y.shape[1]
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# Build the model
+# Build the model with Multi-Head layer in the first layer
 model = tf.keras.Sequential([
     MultiHeadAttention(head_size=64, num_heads=2, dropout=0.1),
     tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(output_size, activation='softmax')  # Adjust based on your output size
+    tf.keras.layers.Dense(output_size.shape[1], activation='softmax')  # Adjust based on your output size
 ])
+
+# Build the model explicitly
+model.build(input_shape=(X_train.shape[1],))
 
 # Compile the model
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
