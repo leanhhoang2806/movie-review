@@ -4,9 +4,12 @@ import string
 import numpy as np
 from itertools import chain
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.layers import BatchNormalization, Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from transformers import BertTokenizer
+from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import AdamW
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 import itertools
@@ -144,10 +147,6 @@ def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, 
     for _ in range(num_layers - 1):
         x = Dense(layer_size, activation='relu')(x)
         x = Dropout(dropout_rate)(x)
-        x = BatchNormalization()(x)
-    
-    x = Dense(output_size, activation='softmax')(x)
-    x = Dropout(dropout_rate)(x)
     
     x = Dense(output_size, activation='softmax')(x)
 
