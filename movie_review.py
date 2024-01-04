@@ -90,7 +90,7 @@ def preprocess_text(text):
 df['tokenized_review'] = df['review'].apply(preprocess_text)
 
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(df['tokenized_review'], df['movie_name'], test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(df['tokenized_review'], df['movie_names'], test_size=0.2, random_state=42)
 
 # Pad sequences for equal length (assuming PyTorch tensors)
 X_train = torch.nn.utils.rnn.pad_sequence(X_train, batch_first=True)
@@ -105,7 +105,7 @@ train_dataset = TensorDataset(X_train, y_train)
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
 # Initialize BERT model for sequence classification
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=len(data['movie_name'].unique()))
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=len(df['movie_names'].unique()))
 
 # Training loop
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
