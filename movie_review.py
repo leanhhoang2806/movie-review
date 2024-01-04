@@ -92,16 +92,16 @@ df['tokenized_review'] = df['review'].apply(preprocess_text)
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(df['tokenized_review'], df['movie_names'], test_size=0.2, random_state=42)
 
-# Pad sequences for equal length (assuming PyTorch tensors)
-X_train = torch.nn.utils.rnn.pad_sequence(X_train, batch_first=True)
-X_test = torch.nn.utils.rnn.pad_sequence(X_test, batch_first=True)
+# Pad sequences for equal length
+X_train_padded = torch.nn.utils.rnn.pad_sequence([torch.tensor(x) for x in X_train], batch_first=True)
+X_test_padded = torch.nn.utils.rnn.pad_sequence([torch.tensor(x) for x in X_test], batch_first=True)
 
 # Convert labels to PyTorch tensors
 y_train = torch.tensor(y_train.values)
 y_test = torch.tensor(y_test.values)
 
 # Define the DataLoader
-train_dataset = TensorDataset(X_train, y_train)
+train_dataset = TensorDataset(X_train_padded, y_train)
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
 # Initialize BERT model for sequence classification
@@ -123,12 +123,12 @@ for epoch in range(num_epochs):
 # Make predictions on the test set
 with torch.no_grad():
     model.eval()
-    outputs = model(X_test)[0]
+    outputs = model(X_test_padded)[0]
     _, predicted = torch.max(outputs, 1)
     predicted_movie = predicted.numpy()
 
 # Evaluate the model
-accuracy = accuracy_score(y_test, predicted_movie)
+accuracy = (predicted_movie == y_test.numpy()).mean()
 print(f'Model Accuracy: {accuracy}')
 
 # Example usage
@@ -136,7 +136,7 @@ def predict_movie_name(review_text):
     processed_text = preprocess_text(review_text)
     with torch.no_grad():
         model.eval()
-        outputs = model(processed_text)[0]
+        outputs = model(torch.tensor([processed_text]))[0]
         _, predicted = torch.max(outputs, 1)
         predicted_movie = predicted.item()
     return predicted_movie
