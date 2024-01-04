@@ -61,35 +61,33 @@ max_movie_length = max(extracted_df['movie_names_token'].apply(len))
 extracted_df['review_token'] = extracted_df['review_token'].apply(lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
 extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
 df = extracted_df
-# Concatenate the two columns to create input data
-X = [" ".join(map(str, tokens)) for tokens in df['review_token']]
 
-# Target data
-y = np.array(df['movie_names_token'].tolist())
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Tokenize input sequences using BERT tokenizer
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-X_train_tokenized = tokenizer(X_train, padding=True, truncation=True, return_tensors='pt', max_length=512, add_special_tokens=True)
-X_test_tokenized = tokenizer(X_test, padding=True, truncation=True, return_tensors='pt', max_length=512, add_special_tokens=True)
 
-# Load pre-trained BERT model
-model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=y_train.shape[1])
+import transformers
 
-# Use AdamW optimizer with weight decay
-optimizer = AdamW(model.parameters(), lr=2e-5)
+# Load the BERT tokenizer
+tokenizer = transformers.BertTokenizer.from_pretrained('bert-base-uncased')
 
-# Compile the model
-model.compile(optimizer=optimizer, loss='mean_squared_error')
+# Load the BERT model
+model = transformers.BertForTokenClassification.from_pretrained('bert-base-uncased')
 
-# Train the model
-model.fit(X_train_tokenized, y_train, epochs=3, batch_size=8, validation_split=0.2)
+# Tokenize the text
+text = extracted_df['review'][0]
+print(f"The question is: {text} ")
+tokens = tokenizer(text, return_tensors='pt')
 
-# Evaluate the model
-loss = model.evaluate(X_test_tokenized, y_test)
-print(f'Mean Squared Error on Test Data: {loss}')
+# Make a prediction
+outputs = model(**tokens)
+predictions = outputs.logits
+
+# Decode the predictions
+labels = predictions.argmax(dim=-1)
+
+# Print the results
+for token, label in zip(tokens['input_ids'], labels):
+    print(tokenizer.decode([token]), label)
 
 
 
