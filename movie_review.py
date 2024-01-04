@@ -107,11 +107,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         if training and self.dropout > 0.0:
             output = tf.keras.layers.Dropout(rate=self.dropout)(output, training=training)
 
-        # Flatten the output before passing to the Dense layer
-        output = tf.keras.layers.Flatten()(output)
-        # Reshape the output to ensure it's 2D
-        output = tf.keras.layers.Reshape((1, self.depth))(output)
-
         return output
 
     def scaled_dot_product_attention(self, query, key, value):
@@ -137,6 +132,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_
 # Build the model with Multi-Head layer in the first layer
 model = tf.keras.Sequential([
     MultiHeadAttention(head_size=layer_size, num_heads=2, dropout=0.1),
+    tf.keras.layers.GlobalAveragePooling1D(),
     tf.keras.layers.Dense(layer_size, activation='relu'),
     tf.keras.layers.Dense(output_size, activation='softmax')  # Adjust based on your output size
 ])
