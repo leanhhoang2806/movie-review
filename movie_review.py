@@ -107,6 +107,9 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         if training and self.dropout > 0.0:
             output = tf.keras.layers.Dropout(rate=self.dropout)(output, training=training)
 
+        # Flatten the output before passing to the Dense layer
+        output = tf.keras.layers.Flatten()(output)
+
         return output
 
     def scaled_dot_product_attention(self, query, key, value):
