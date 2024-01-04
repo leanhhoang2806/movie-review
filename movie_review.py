@@ -8,6 +8,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import SimpleRNN, Dense
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from transformers import BertTokenizer
+from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import AdamW
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -58,46 +60,36 @@ max_movie_length = max(extracted_df['movie_names_token'].apply(len))
 # Apply padding to the DataFrame
 extracted_df['review_token'] = extracted_df['review_token'].apply(lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
 extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
+df = extracted_df
+# Concatenate the two columns to create input data
+X = [" ".join(map(str, tokens)) for tokens in df['review_token']]
+
+# Target data
+y = np.array(df['movie_names_token'].tolist())
 
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(
-    np.array(extracted_df['review_token'].tolist()),
-    np.array(extracted_df['movie_names_token'].tolist()),
-    test_size=0.2,
-    random_state=42
-)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Determine input_shape from X_train and output_size from y_train
-# Determine input_shape from X_train and output_size from y_train
-input_shape = (X_train.shape[1],)  # Tuple representing the shape of a single time step
-output_size = y_train.shape[1]
+# Tokenize input sequences using BERT tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+X_train_tokenized = tokenizer(X_train, padding=True, truncation=True, return_tensors='pt', max_length=512, add_special_tokens=True)
+X_test_tokenized = tokenizer(X_test, padding=True, truncation=True, return_tensors='pt', max_length=512, add_special_tokens=True)
 
-# Build the feedforward neural network model
-model = Sequential()
-model.add(Dense(units=50, activation='relu', input_shape=input_shape))
-model.add(Dense(units=output_size, activation='linear'))
+# Load pre-trained BERT model
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=y_train.shape[1])
 
-model.compile(optimizer='adam', loss='mean_squared_error')
+# Use AdamW optimizer with weight decay
+optimizer = AdamW(model.parameters(), lr=2e-5)
 
-# Print model summary for debugging
-model.summary()
+# Compile the model
+model.compile(optimizer=optimizer, loss='mean_squared_error')
 
 # Train the model
-history = model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.2)
+model.fit(X_train_tokenized, y_train, epochs=3, batch_size=8, validation_split=0.2)
 
 # Evaluate the model
-loss = model.evaluate(X_test, y_test)
+loss = model.evaluate(X_test_tokenized, y_test)
 print(f'Mean Squared Error on Test Data: {loss}')
-
-# Make predictions
-predictions = model.predict(X_test)
-
-# Print some example predictions
-for i in range(5):
-    print(f"Example {i + 1}:")
-    print("Actual:", y_test[i])
-    print("Predicted:", predictions[i])
-    print()
 
 
 
