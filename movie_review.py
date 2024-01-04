@@ -64,19 +64,20 @@ df = extracted_df
 
 
 
-
+import torch
 import transformers
+from transformers import BertTokenizer, BertForTokenClassification
 
 # Load the BERT tokenizer
-tokenizer = transformers.BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 # Load the BERT model
-model = transformers.BertForTokenClassification.from_pretrained('bert-base-uncased')
+model = BertForTokenClassification.from_pretrained('bert-base-uncased')
 
 # Tokenize the text
-text = extracted_df['review'][0]
+text = "your_input_text_here"  # Replace with the actual text you want to tokenize
 print(f"The question is: {text} ")
-tokenized_sentence = tokenizer.encode(text, padding=True, truncation=True,max_length=50, add_special_tokens = True)
+tokenized_sentence = tokenizer.encode_plus(text, padding=True, truncation=True, max_length=50, add_special_tokens=True, return_tensors="pt")
 
 # Make a prediction
 outputs = model(**tokenized_sentence)
@@ -86,8 +87,8 @@ predictions = outputs.logits
 labels = predictions.argmax(dim=-1)
 
 # Print the results
-for token, label in zip(tokenized_sentence['input_ids'], labels):
-    print(tokenizer.decode([token]), label)
+for token, label in zip(tokenized_sentence['input_ids'][0], labels[0]):
+    print(tokenizer.decode([token]), label.item())
 
 
 
