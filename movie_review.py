@@ -74,6 +74,8 @@ X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
 
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
 class MultiHeadAttention(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
@@ -129,6 +131,7 @@ def scaled_dot_product_attention(query, key, value):
     output = tf.matmul(attention_weights, value)
     return output
 
+# Modify the model with Multi-Head Attention
 def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
     inputs = Input(shape=(input_shape,))
     x = Dense(layer_size, activation='relu')(inputs)
@@ -152,8 +155,8 @@ def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, 
 
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
-    'num_layers': [2, 4 , 6, 8, 10],
-    'layer_size': [32, 64, 128, 256, 512, 1024, 2048],
+    'num_layers': [1, 2, 3],
+    'layer_size': [64, 128, 256],  # Increase the layer size
     'dropout_rate': [0.2, 0.5],
     'num_heads': [2, 4, 8],
 }
@@ -162,34 +165,27 @@ param_grid = {
 batch_size = 32
 accumulation_steps = 4  # Accumulate gradients over 4 mini-batches
 
-# Perform a grid search
+# Perform a grid search with tqdm progress bar
 best_accuracy = 0
 best_model = None
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-
+# Wrap tqdm around itertools.product to show progress
 for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
     model = build_model(X.shape[1], output_size, *params)
-
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-     # Split the data into batches
+
+    # Split the data into batches
     for i in range(0, len(X_train), batch_size * accumulation_steps):
         X_batch = X_train[i:i + batch_size * accumulation_steps]
         y_batch = y_train[i:i + batch_size * accumulation_steps]
 
-        # Compute gradients over multiple mini-batches
-        with tf.GradientTape() as tape:
-            y_pred = model(X_batch)
-            loss = tf.keras.losses.categorical_crossentropy(y_batch, y_pred)
+        # Train the model on the current batch
+        model.train_on_batch(X_batch, y_batch)
 
-        # Accumulate gradients
-        gradients = tape.gradient(loss, model.trainable_variables)
-        model.optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+    # Save the model parameters to disk
+    model.save_weights(f'model_weights_{params}.h5')
 
-
-    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
-
+    # Evaluate the model
     _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
     tqdm.write(f'Model Accuracy for {params}: {accuracy}')
