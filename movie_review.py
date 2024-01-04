@@ -5,13 +5,14 @@ import numpy as np
 from itertools import chain
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import SimpleRNN, Dense
+from tensorflow.keras.layers import SimpleRNN, Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from transformers import BertTokenizer
 from transformers import BertTokenizer, BertForSequenceClassification
 from transformers import AdamW
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
+import itertools
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -127,41 +128,61 @@ def scaled_dot_product_attention(query, key, value):
     output = tf.matmul(attention_weights, value)
     return output
 
-def build_model(input_shape, output_size):
+def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
     inputs = Input(shape=(input_shape,))
-    x = Dense(64, activation='relu')(inputs)
+    x = Dense(layer_size, activation='relu')(inputs)
     
     # Add Multi-Head Attention
-    attention = MultiHeadAttention(d_model=64, num_heads=4)({
+    attention = MultiHeadAttention(d_model=layer_size, num_heads=num_heads)({
         'query': tf.expand_dims(x, 1),
         'key': tf.expand_dims(x, 1),
         'value': tf.expand_dims(x, 1)
     })
     x = LayerNormalization(epsilon=1e-6)(x + Flatten()(attention))
     
+    for _ in range(num_layers - 1):
+        x = Dense(layer_size, activation='relu')(x)
+        x = Dropout(dropout_rate)(x)
+    
     x = Dense(output_size, activation='softmax')(x)
 
     model = Model(inputs=inputs, outputs=x)
     return model
 
+# Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
+param_grid = {
+    'num_layers': [1, 2, 3],
+    'layer_size': [32, 64, 128],
+    'dropout_rate': [0.2, 0.5],
+    'num_heads': [2, 4, 8],
+}
+
+# Perform a grid search
+best_accuracy = 0
+best_model = None
+
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-# Build the model
-model = build_model(X.shape[1], output_size)
+for params in itertools.product(*param_grid.values()):
+    model = build_model(X.shape[1], output_size, *params)
 
-# Compile the model
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Print model summary
-model.summary()
+    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
 
-# Train the model
-model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
+    _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
-# Evaluate the model
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f'Model Accuracy: {accuracy}')
+    print(f'Model Accuracy for {params}: {accuracy}')
+
+    if accuracy > best_accuracy:
+        best_accuracy = accuracy
+        best_model = model
+
+# Print the best model's summary
+if best_model:
+    print("\nBest Model Summary:")
+    best_model.summary()
 
 
 # ======== Working version, do not touch ===========
