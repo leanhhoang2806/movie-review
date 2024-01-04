@@ -75,7 +75,7 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 model = BertForTokenClassification.from_pretrained('bert-base-uncased')
 
 # Tokenize the text
-text = "your_input_text_here"  # Replace with the actual text you want to tokenize
+text = extracted_df['review'][0] # Replace with the actual text you want to tokenize
 print(f"The question is: {text} ")
 tokenized_sentence = tokenizer.encode_plus(text, padding=True, truncation=True, max_length=50, add_special_tokens=True, return_tensors="pt")
 
