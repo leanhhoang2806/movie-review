@@ -76,17 +76,17 @@ model = transformers.BertForTokenClassification.from_pretrained('bert-base-uncas
 # Tokenize the text
 text = extracted_df['review'][0]
 print(f"The question is: {text} ")
-tokens = tokenizer(text, return_tensors='pt')
+tokenized_sentence = tokenizer.encode(text, padding=True, truncation=True,max_length=50, add_special_tokens = True)
 
 # Make a prediction
-outputs = model(**tokens)
+outputs = model(**tokenized_sentence)
 predictions = outputs.logits
 
 # Decode the predictions
 labels = predictions.argmax(dim=-1)
 
 # Print the results
-for token, label in zip(tokens['input_ids'], labels):
+for token, label in zip(tokenized_sentence['input_ids'], labels):
     print(tokenizer.decode([token]), label)
 
 
