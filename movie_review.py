@@ -132,7 +132,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_
 model = tf.keras.Sequential([
     MultiHeadAttention(head_size=64, num_heads=2, dropout=0.1),
     tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(output_size.shape[1], activation='softmax')  # Adjust based on your output size
+    tf.keras.layers.Dense(output_size, activation='softmax')  # Adjust based on your output size
 ])
 
 # Build the model explicitly
