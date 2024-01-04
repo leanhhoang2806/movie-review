@@ -68,6 +68,9 @@ import tensorflow as tf
 from tensorflow.keras.layers import Embedding, LSTM, Dense
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+from sklearn.metrics import accuracy_score
 
 # Input text
 input_text = df['review'][0]
@@ -76,49 +79,72 @@ input_text = df['review'][0]
 output_text = df['movie_names'][0]
 
 # Tokenize the input and output texts
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts([input_text, output_text])
-total_words = len(tokenizer.word_index) + 1
+# Load the pre-trained BERT tokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-# Create input sequences
-input_sequences = tokenizer.texts_to_sequences([input_text])[0]
+# Tokenize and preprocess the text
+def preprocess_text(text):
+    tokens = tokenizer.encode(text, add_special_tokens=True)
+    return tokens
 
-# Create input and output sequences for training
-X = []
-y = []
-for i in range(1, len(input_sequences)):
-    input_sequence = input_sequences[:i+1]
-    X.append(input_sequence[:-1])
-    y.append(input_sequence[-1])
+df['tokenized_review'] = df['review'].apply(preprocess_text)
 
-X = pad_sequences(X)
-y = tf.keras.utils.to_categorical(y, num_classes=total_words)
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(df['tokenized_review'], df['movie_name'], test_size=0.2, random_state=42)
 
-# Build the model
-model = tf.keras.Sequential([
-    Embedding(total_words, 50, input_length=X.shape[1]),
-    LSTM(100),
-    Dense(total_words, activation='softmax')
-])
+# Pad sequences for equal length (assuming PyTorch tensors)
+X_train = torch.nn.utils.rnn.pad_sequence(X_train, batch_first=True)
+X_test = torch.nn.utils.rnn.pad_sequence(X_test, batch_first=True)
 
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+# Convert labels to PyTorch tensors
+y_train = torch.tensor(y_train.values)
+y_test = torch.tensor(y_test.values)
 
-# Train the model (for simplicity, using the same input and output text)
-model.fit(X, y, epochs=100, verbose=1)
+# Define the DataLoader
+train_dataset = TensorDataset(X_train, y_train)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-# Generate text using the trained model
-input_sequence = input_sequences[:10]  # Use the first 10 words as input
-for _ in range(20):
-    padded_input_sequence = pad_sequences([input_sequence], maxlen=X.shape[1])
-    predicted_word_index = model.predict_classes(padded_input_sequence, verbose=0)
-    predicted_word = tokenizer.index_word[predicted_word_index[0]]
-    print(predicted_word, end=' ')
-    input_sequence.append(predicted_word_index[0])
+# Initialize BERT model for sequence classification
+model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=len(data['movie_name'].unique()))
 
-# Output:
-# movie... (the rest of the text) ...terrible repercussions altogether. War movie... (the rest of the text) ...terrible repercussions altogether.
+# Training loop
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
+criterion = torch.nn.CrossEntropyLoss()
 
+num_epochs = 5
+for epoch in range(num_epochs):
+    for inputs, labels in train_loader:
+        optimizer.zero_grad()
+        outputs = model(inputs)[0]
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
 
+# Make predictions on the test set
+with torch.no_grad():
+    model.eval()
+    outputs = model(X_test)[0]
+    _, predicted = torch.max(outputs, 1)
+    predicted_movie = predicted.numpy()
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, predicted_movie)
+print(f'Model Accuracy: {accuracy}')
+
+# Example usage
+def predict_movie_name(review_text):
+    processed_text = preprocess_text(review_text)
+    with torch.no_grad():
+        model.eval()
+        outputs = model(processed_text)[0]
+        _, predicted = torch.max(outputs, 1)
+        predicted_movie = predicted.item()
+    return predicted_movie
+
+# Test the model with a sample review
+sample_review = "I absolutely loved this movie! The acting was superb, and the storyline kept me engaged throughout."
+predicted_movie = predict_movie_name(sample_review)
+print(f'Predicted Movie: {predicted_movie}')
 
 
 # ======== Working version, do not touch ===========
