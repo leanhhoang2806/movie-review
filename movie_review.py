@@ -160,7 +160,6 @@ param_grid = {
     'layer_size': [64, 128, 256],  # Increase the layer size
     'dropout_rate': [0.2, 0.5],
     'num_heads': [2, 4, 8],
-    'num_neurons': [64, 128, 256],  # Include different numbers of neurons
 }
 
 # Perform a grid search with tqdm progress bar
