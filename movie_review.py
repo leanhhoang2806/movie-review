@@ -12,6 +12,7 @@ from tensorflow.keras.models import Model
 import itertools
 from tqdm import tqdm
 import tensorflow as tf
+from transformers import TFBertModel
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -131,6 +132,12 @@ def scaled_dot_product_attention(query, key, value):
 def build_complex_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
     inputs = Input(shape=(input_shape,))
     x = Dense(layer_size // 2, activation='relu')(inputs)  # Reduce layer size
+        
+    # Use BERT model as embedding layer
+    bert_model = TFBertModel.from_pretrained('bert-base-uncased')
+    bert_output = bert_model(inputs)[0]
+    
+    x = Dense(layer_size // 2, activation='relu')(bert_output[:, 0, :]) 
     attention = MultiHeadAttention(d_model=layer_size // 2, num_heads=num_heads)({
         'query': tf.expand_dims(x, 1),
         'key': tf.expand_dims(x, 1),
