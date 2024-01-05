@@ -157,7 +157,7 @@ strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
     'num_layers': [1, 2, 3],
-    'layer_size': [64, 128, 256],  # Increase the layer size
+    'layer_size': [256*i for i in range(1, 5)],  # Increase the layer size
     'dropout_rate': [0.2, 0.5],
     'num_heads': [2, 4, 8],
 }
