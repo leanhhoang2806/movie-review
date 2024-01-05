@@ -4,12 +4,9 @@ import string
 import numpy as np
 from itertools import chain
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import SimpleRNN, Dense, Dropout
+from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from transformers import BertTokenizer
-from transformers import BertTokenizer, BertForSequenceClassification
-from transformers import AdamW
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 import itertools
@@ -156,7 +153,7 @@ def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, 
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
     'num_layers': [1, 2, 3],
-    'layer_size': [64, 128, 256],  # Increase the layer size
+    'layer_size': [256, 512, 1024, 2048, 4096],  # Increase the layer size
     'dropout_rate': [0.2, 0.5],
     'num_heads': [2, 4, 8],
 }
