@@ -128,13 +128,11 @@ def scaled_dot_product_attention(query, key, value):
     output = tf.matmul(attention_weights, value)
     return output
 
-# Modify the model with Multi-Head Attention
-def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
+# ======== Multi-computer search ===========
+def build_complex_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
     inputs = Input(shape=(input_shape,))
-    x = Dense(layer_size, activation='relu')(inputs)
-    
-    # Add Multi-Head Attention
-    attention = MultiHeadAttention(d_model=layer_size, num_heads=num_heads)({
+    x = Dense(layer_size // 2, activation='relu')(inputs)  # Reduce layer size
+    attention = MultiHeadAttention(d_model=layer_size // 2, num_heads=num_heads)({
         'query': tf.expand_dims(x, 1),
         'key': tf.expand_dims(x, 1),
         'value': tf.expand_dims(x, 1)
@@ -142,116 +140,96 @@ def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, 
     x = LayerNormalization(epsilon=1e-6)(x + Flatten()(attention))
     
     for _ in range(num_layers - 1):
-        x = Dense(layer_size, activation='relu')(x)
+        x = Dense(layer_size // 2, activation='relu')(x)  # Reduce layer size
         x = Dropout(dropout_rate)(x)
+    
+    x = Dense(layer_size // 2, activation='relu')(x)  # Reduce layer size
+    x = Dropout(dropout_rate)(x)
     
     x = Dense(output_size, activation='softmax')(x)
 
-    model = Model(inputs=inputs, outputs=x)
+    model = tf.keras.models.Model(inputs=inputs, outputs=x)
     return model
+# Use MirroredStrategy for model parallelism
+strategy = tf.distribute.MirroredStrategy()
 
-# Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
-param_grid = {
-    'num_layers': [1, 2, 3],
-    'layer_size': [256, 512, 1024, 2048, 4096],  # Increase the layer size
-    'dropout_rate': [0.2, 0.5],
-    'num_heads': [2, 4, 8],
-}
-
-# Set batch size and accumulation steps
-batch_size = 32
-accumulation_steps = 4  # Accumulate gradients over 4 mini-batches
-
-# Perform a grid search with tqdm progress bar
-best_accuracy = 0
-best_model = None
-
-# Wrap tqdm around itertools.product to show progress
-for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
-    model = build_model(X.shape[1], output_size, *params)
+with strategy.scope():
+    # Create the model in the strategy's scope
+    model = build_complex_model(X.shape[1], output_size, num_layers=2, layer_size=256, dropout_rate=0.5, num_heads=4)
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    # Split the data into batches
-    for i in range(0, len(X_train), batch_size * accumulation_steps):
-        X_batch = X_train[i:i + batch_size * accumulation_steps]
-        y_batch = y_train[i:i + batch_size * accumulation_steps]
+# Train the model
+model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
 
-        # Train the model on the current batch
-        model.train_on_batch(X_batch, y_batch)
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print(f'Model Accuracy: {accuracy}')
 
-    # Save the model parameters to disk
-    model.save_weights(f'model_weights_{params}.h5')
+# ======== Single computer search ===========
+# # Modify the model with Multi-Head Attention
+# def build_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
+#     inputs = Input(shape=(input_shape,))
+#     x = Dense(layer_size, activation='relu')(inputs)
+    
+#     # Add Multi-Head Attention
+#     attention = MultiHeadAttention(d_model=layer_size, num_heads=num_heads)({
+#         'query': tf.expand_dims(x, 1),
+#         'key': tf.expand_dims(x, 1),
+#         'value': tf.expand_dims(x, 1)
+#     })
+#     x = LayerNormalization(epsilon=1e-6)(x + Flatten()(attention))
+    
+#     for _ in range(num_layers - 1):
+#         x = Dense(layer_size, activation='relu')(x)
+#         x = Dropout(dropout_rate)(x)
+    
+#     x = Dense(output_size, activation='softmax')(x)
 
-    # Evaluate the model
-    _, accuracy = model.evaluate(X_test, y_test, verbose=0)
+#     model = Model(inputs=inputs, outputs=x)
+#     return model
 
-    tqdm.write(f'Model Accuracy for {params}: {accuracy}')
+# # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
+# param_grid = {
+#     'num_layers': [1, 2, 3],
+#     'layer_size': [256, 512, 1024, 2048, 4096],  # Increase the layer size
+#     'dropout_rate': [0.2, 0.5],
+#     'num_heads': [2, 4, 8],
+# }
 
-    if accuracy > best_accuracy:
-        best_accuracy = accuracy
-        best_model = model
+# # Set batch size and accumulation steps
+# batch_size = 32
+# accumulation_steps = 4  # Accumulate gradients over 4 mini-batches
 
-# Print the best model's summary
-if best_model:
-    print("\nBest Model Summary:")
-    best_model.summary()
+# # Perform a grid search with tqdm progress bar
+# best_accuracy = 0
+# best_model = None
 
+# # Wrap tqdm around itertools.product to show progress
+# for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
+#     model = build_model(X.shape[1], output_size, *params)
+#     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# ======== Working version, do not touch ===========
+#     # Split the data into batches
+#     for i in range(0, len(X_train), batch_size * accumulation_steps):
+#         X_batch = X_train[i:i + batch_size * accumulation_steps]
+#         y_batch = y_train[i:i + batch_size * accumulation_steps]
 
-# # Assuming 'train_data' is your training dataset with reviews and extracted movie names
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+#         # Train the model on the current batch
+#         model.train_on_batch(X_batch, y_batch)
 
-# extracted_df['tokenized_reviews'] = extracted_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
-# extracted_df["input_ids"] = extracted_df['tokenized_reviews'].apply(lambda x: np.array(x['input_ids']))
-# extracted_df['input_ids'] = extracted_df['input_ids'].apply(lambda x: np.array(x[0]))
+#     # Save the model parameters to disk
+#     model.save_weights(f'model_weights_{params}.h5')
 
-# # Pad or truncate the 'input_ids' to a fixed length (e.g., max_length=512)
-# max_length = 512
-# extracted_df['padded_input_ids'] = extracted_df['input_ids'].apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
+#     # Evaluate the model
+#     _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
-# # Encode movie names using LabelEncoder
-# label_encoder = LabelEncoder()
-# extracted_df['encoded_labels'] = label_encoder.fit_transform(extracted_df['movie_names'])
+#     tqdm.write(f'Model Accuracy for {params}: {accuracy}')
 
-# # Shuffle the DataFrame
-# extracted_df = shuffle(extracted_df, random_state=42)
+#     if accuracy > best_accuracy:
+#         best_accuracy = accuracy
+#         best_model = model
 
-# # Split the DataFrame into training and testing sets
-# train_df, test_df = train_test_split(extracted_df, test_size=0.2, random_state=42)
-
-
-# # Define the neural network model
-# model = Sequential([
-#     tf.keras.layers.Embedding(input_dim=30522, output_dim=32, input_length=max_length),  # 30522 is the vocabulary size for BERT
-#     Flatten(),
-#     Dense(units=len(set(extracted_df['encoded_labels'])), activation='softmax')
-# ])
-
-# # Compile the model
-# model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-# # Train the model
-# model.fit(np.vstack(train_df['padded_input_ids']), train_df['encoded_labels'], epochs=5, batch_size=16)
-
-# # Evaluate the model on the test set
-# test_loss, test_acc = model.evaluate(np.vstack(test_df['padded_input_ids']), test_df['encoded_labels'])
-# print(f'Test Loss: {test_loss}, Test Accuracy: {test_acc}')
-
-# # Save the model for later use
-# model.save('movie_name_prediction_model')
-
-# ==== testing =====
-
-# loaded_model = load_model('movie_name_prediction_model')
-# tokenized_reviews = imdb_df['review'].apply(lambda x: tokenizer(x, padding=True, truncation=True, return_tensors='tf', max_length=512))
-# input_ids = tokenized_reviews.apply(lambda x: np.array(x['input_ids']))
-# input_ids = input_ids.apply(lambda x: np.array(x[0]))
-# padded_input_ids = input_ids.apply(lambda x: pad_sequences([x], maxlen=max_length, dtype="long", value=0, truncating="post")[0])
-
-# predictions = loaded_model.predict(np.vstack(padded_input_ids))
-
-# decoded_predictions = label_encoder.inverse_transform(np.argmax(predictions, axis=1))
-
-# imdb_df['predicted_movie_names'] = decoded_predictions
-# print(imdb_df[['review', 'predicted_movie_names']])
+# # Print the best model's summary
+# if best_model:
+#     print("\nBest Model Summary:")
+#     best_model.summary()
