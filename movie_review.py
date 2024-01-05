@@ -152,7 +152,7 @@ def build_complex_model(input_shape, output_size, num_layers, layer_size, dropou
 
 
 # Use OneDeviceStrategy for model parallelism in a single GPU environment
-strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
