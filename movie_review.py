@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 import itertools
 from tqdm import tqdm
@@ -8,8 +9,6 @@ import tensorflow as tf
 from transformers import TFBertModel
 from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -17,9 +16,8 @@ data_loader = DataLoader(csv_file_path)
 imdb_df = data_loader.read_to_pandas()
 
 # Create a new DataFrame from the list of extracted data
-extracted_df = TokenizedText().tokenized(imdb_df)
+extracted_df = TokenizedText.tokenized(imdb_df)
 
-# Data Normalization
 # Determine the maximum lengths
 max_review_length = max(extracted_df['review_token'].apply(len))
 max_movie_length = max(extracted_df['movie_names_token'].apply(len))
