@@ -13,6 +13,10 @@ import itertools
 from tqdm import tqdm
 import tensorflow as tf
 from transformers import TFBertModel
+import tensorflow.keras.backend as K
+
+# Reset TensorFlow session and graph
+K.clear_session()
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -136,10 +140,8 @@ def build_complex_model(input_shape, output_size, num_layers, layer_size, dropou
     # Use BERT model as embedding layer
     bert_model = TFBertModel.from_pretrained('bert-base-uncased')
     bert_output = bert_model(inputs)[0]
-    # Apply pooling to BERT output
-    pooled_output = tf.keras.layers.GlobalAveragePooling1D()(bert_output)
-
-    x = Dense(layer_size // 2, activation='relu')(pooled_output)
+    
+    x = Dense(layer_size // 2, activation='relu')(bert_output[:, 0, :]) 
     attention = MultiHeadAttention(d_model=layer_size // 2, num_heads=num_heads)({
         'query': tf.expand_dims(x, 1),
         'key': tf.expand_dims(x, 1),
