@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.model_selection import train_test_split
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 import itertools
@@ -7,9 +8,6 @@ import tensorflow as tf
 from transformers import TFBertModel
 from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
-from processors.normalizer import Normalizer
-from models.multiheads import MultiHeadAttention
-from processors.train_test_split import data_split
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -19,7 +17,15 @@ imdb_df = data_loader.read_to_pandas()
 # Create a new DataFrame from the list of extracted data
 extracted_df = TokenizedText().tokenized(imdb_df)
 
-df = Normalizer().normalize(extracted_df)
+# Data Normalization
+# Determine the maximum lengths
+max_review_length = max(extracted_df['review_token'].apply(len))
+max_movie_length = max(extracted_df['movie_names_token'].apply(len))
+
+# Apply padding to the DataFrame
+extracted_df['review_token'] = extracted_df['review_token'].apply(lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
+extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
+df = extracted_df[['review_token', 'movie_names_token']]
 
 
 
@@ -27,8 +33,62 @@ X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
 
-X_train, X_test, y_train, y_test = data_split(df)
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
+class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        self.num_heads = num_heads
+        self.d_model = d_model
+
+        assert d_model % self.num_heads == 0
+
+        self.depth = d_model // self.num_heads
+
+        self.query_dense = Dense(d_model)
+        self.key_dense = Dense(d_model)
+        self.value_dense = Dense(d_model)
+
+        self.dense = Dense(d_model)
+
+    def split_heads(self, x, batch_size):
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
+
+    def call(self, inputs):
+        query, key, value = inputs['query'], inputs['key'], inputs['value']
+        batch_size = tf.shape(query)[0]
+
+        # Linear layers
+        query = self.query_dense(query)
+        key = self.key_dense(key)
+        value = self.value_dense(value)
+
+        # Split heads
+        query = self.split_heads(query, batch_size)
+        key = self.split_heads(key, batch_size)
+        value = self.split_heads(value, batch_size)
+
+        # Scaled dot-product attention
+        scaled_attention = scaled_dot_product_attention(query, key, value)
+        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
+
+        # Concatenate heads
+        concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.d_model))
+
+        # Final linear layer
+        outputs = self.dense(concat_attention)
+
+        return outputs
+
+# Scaled Dot-Product Attention Layer
+def scaled_dot_product_attention(query, key, value):
+    matmul_qk = tf.matmul(query, key, transpose_b=True)
+    dk = tf.cast(tf.shape(key)[-1], tf.float32)
+    scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
+    output = tf.matmul(attention_weights, value)
+    return output
 
 # ======== Multi-computer search ===========
 def build_complex_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
