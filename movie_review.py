@@ -1,14 +1,8 @@
-import numpy as np
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
-import itertools
-from tqdm import tqdm
-import tensorflow as tf
-from transformers import TFBertModel
+
 from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
 from processors.normalizer import Normalizer
-from models.distributed_training import build_complex_model
+from models.distributed_training import distributed_training
 from processors.train_test_split import data_split, get_output_size, get_input_shape
 
 # Load the IMDb dataset
@@ -29,10 +23,6 @@ X_train, X_test, y_train, y_test = data_split(df)
 
 # ======== Multi-computer search ===========
 
-
-# Use OneDeviceStrategy for model parallelism in a single GPU environment
-strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
-
 # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
 param_grid = {
     'num_layers': [i for i in range(1, 5)],
@@ -41,27 +31,8 @@ param_grid = {
     'num_heads': [i*2 for i in range(1,3)],
 }
 
-# Perform a grid search with tqdm progress bar
-best_accuracy = 0
-best_model = None
 
-# Wrap tqdm around itertools.product to show progress
-for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
-    with strategy.scope():
-        model = build_complex_model(input_shape, output_size, *params)
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=-1)
-
-    # Evaluate the model
-    _, accuracy = model.evaluate(X_test, y_test, verbose=-1)
-
-    tqdm.write(f'Model Accuracy for {params}: {accuracy}')
-
-    if accuracy > best_accuracy:
-        best_accuracy = max(accuracy, best_accuracy)
-        best_params = params
-
+best_accuracy, best_params = distributed_training(param_grid, input_shape, output_size, X_train, y_train, X_test, y_test)
 print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 # ======== Single computer search ===========
 # # Modify the model with Multi-Head Attention
