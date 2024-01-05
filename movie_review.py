@@ -2,14 +2,77 @@ import pandas as pd
 import re
 import string
 import numpy as np
-from itertools import product, chain
+from itertools import chain, product
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
+from transformers import TFBertModel
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Dropout, Input, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 from tqdm import tqdm
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# Reset TensorFlow session and graph
+tf.keras.backend.clear_session()
+
+# Load the IMDb dataset
+csv_file_path = './IMDB Dataset.csv'
+imdb_df = pd.read_csv(csv_file_path)
+
+# Define a regular expression pattern for extracting text between quotation marks
+movie_name_pattern = re.compile(r'"([^"]+)"')
+
+# Initialize an empty list to store extracted data
+extracted_data = []
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+def get_bert_token(word):
+    token_ids = tokenizer.encode(word, add_special_tokens=False, padding=True, truncation=True, max_length=512)
+    return token_ids
+
+# Loop through each review and extract text between quotation marks
+for review in imdb_df['review']:
+    # Extract text between quotation marks using the defined pattern
+    matches = re.findall(movie_name_pattern, review)
+
+    # Filter out names that are not in capitalization format
+    valid_names = [name for name in matches if name.istitle()]
+
+    # Clean up punctuation at the beginning or end of each title
+    cleaned_names = [name.strip(string.punctuation) for name in valid_names]
+
+    # Append the review and cleaned text to the list if the list is not empty
+    if cleaned_names and len(cleaned_names) == 1:
+        corrected_name = cleaned_names[0].strip()
+        if len(corrected_name.split()) == 2:
+            # Get BERT token for movie name
+            movie_name_tokens_nested = [get_bert_token(token) for token in corrected_name.split()]
+            movie_name_tokens_flatten = list(chain(*movie_name_tokens_nested))
+
+            # Get BERT token for review
+            review_tokens = get_bert_token(review)
+            extracted_data.append({'review_token': review_tokens, 'movie_names_token': movie_name_tokens_flatten,
+                                   "review": review, "movie_names": corrected_name})
+
+# Create a new DataFrame from the list of extracted data
+extracted_df = pd.DataFrame(extracted_data)
+
+# Determine the maximum lengths
+max_review_length = max(extracted_df['review_token'].apply(len))
+max_movie_length = max(extracted_df['movie_names_token'].apply(len))
+
+# Apply padding to the DataFrame
+extracted_df['review_token'] = extracted_df['review_token'].apply(
+    lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
+extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(
+    lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
+df = extracted_df[['review_token', 'movie_names_token']]
+
+X = np.array(df['review_token'].tolist())
+Y = np.array(df['movie_names_token'].tolist())
+output_size = Y.shape[1]
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
 class MultiHeadAttention(tf.keras.layers.Layer):
     def __init__(self, d_model, num_heads):
@@ -57,6 +120,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         return outputs
 
+# Scaled Dot-Product Attention Layer
 def scaled_dot_product_attention(query, key, value):
     matmul_qk = tf.matmul(query, key, transpose_b=True)
     dk = tf.cast(tf.shape(key)[-1], tf.float32)
@@ -65,46 +129,11 @@ def scaled_dot_product_attention(query, key, value):
     output = tf.matmul(attention_weights, value)
     return output
 
-def load_imdb_dataset(csv_file_path='./IMDB Dataset.csv'):
-    return pd.read_csv(csv_file_path)
-
-def extract_movie_data(review):
-    movie_name_pattern = re.compile(r'"([^"]+)"')
-    matches = re.findall(movie_name_pattern, review)
-    valid_names = [name for name in matches if name.istitle()]
-    cleaned_names = [name.strip(string.punctuation) for name in valid_names]
-    if cleaned_names and len(cleaned_names) == 1:
-        corrected_name = cleaned_names[0].strip()
-        if len(corrected_name.split()) == 2:
-            return corrected_name
-    return None
-
-def get_bert_token(word, tokenizer):
-    token_ids = tokenizer.encode(word, add_special_tokens=False, padding=True, truncation=True, max_length=512)
-    return token_ids
-
-def preprocess_review_data(review, tokenizer):
-    movie_name = extract_movie_data(review)
-    if movie_name:
-        movie_name_tokens_nested = [get_bert_token(token, tokenizer) for token in movie_name.split()]
-        movie_name_tokens_flatten = list(chain(*movie_name_tokens_nested))
-        review_tokens = get_bert_token(review, tokenizer)
-        return {'review_token': review_tokens, 'movie_names_token': movie_name_tokens_flatten,
-                "review": review, "movie_names": movie_name}
-    return None
-
-def preprocess_df(extracted_data, max_review_length, max_movie_length):
-    extracted_df = pd.DataFrame(extracted_data)
-    extracted_df['review_token'] = extracted_df['review_token'].apply(
-        lambda x: pad_sequences([x], maxlen=max_review_length, padding='post', truncating='post')[0])
-    extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(
-        lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
-    return extracted_df[['review_token', 'movie_names_token']]
-
+# ======== Multi-computer search ===========
 def build_complex_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
     inputs = Input(shape=(input_shape,))
-    x = Dense(layer_size // 2, activation='relu')(inputs)
-    
+    x = Dense(layer_size // 2, activation='relu')(inputs)  # Reduce layer size
+
     attention = MultiHeadAttention(d_model=layer_size // 2, num_heads=num_heads)({
         'query': tf.expand_dims(x, 1),
         'key': tf.expand_dims(x, 1),
@@ -113,10 +142,10 @@ def build_complex_model(input_shape, output_size, num_layers, layer_size, dropou
     x = LayerNormalization(epsilon=1e-6)(x + Flatten()(attention))
 
     for _ in range(num_layers - 1):
-        x = Dense(layer_size // 2, activation='relu')(x)
+        x = Dense(layer_size // 2, activation='relu')(x)  # Reduce layer size
         x = Dropout(dropout_rate)(x)
 
-    x = Dense(layer_size // 2, activation='relu')(x)
+    x = Dense(layer_size // 2, activation='relu')(x)  # Reduce layer size
     x = Dropout(dropout_rate)(x)
 
     x = Dense(output_size, activation='softmax')(x)
@@ -124,74 +153,40 @@ def build_complex_model(input_shape, output_size, num_layers, layer_size, dropou
     model = Model(inputs=inputs, outputs=x)
     return model
 
-def grid_search(param_grid, X_train, y_train, X_test, y_test, input_shape, output_size):
-    best_accuracy = 0
-    best_params = None
-    # Use MultiWorkerMirroredStrategy for model parallelism in a single GPU environment
-    strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
-    for params in tqdm(product(*param_grid.values()), total=len(list(product(*param_grid.values()))), desc="Grid Search Progress"):
-        with strategy.scope():
-            model = build_complex_model(input_shape, output_size, *params)
-            model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+# Use OneDeviceStrategy for model parallelism in a single GPU environment
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy()
 
-        model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
+# Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
+param_grid = {
+    'num_layers': range(1, 5),
+    'layer_size': [256 * i for i in range(5, 10)],  # Increase the layer size
+    'dropout_rate': [0.2 * i for i in range(1, 5)],
+    'num_heads': [i * 2 for i in range(1, 3)],
+}
 
-        _, accuracy = model.evaluate(X_test, y_test, verbose=0)
+# Perform a grid search with tqdm progress bar
+best_accuracy = 0
+best_params = None
 
-        tqdm.write(f'Model Accuracy for {params}: {accuracy}')
+# Wrap tqdm around itertools.product to show progress
+for params in tqdm(product(*param_grid.values()), total=len(list(product(*param_grid.values()))), desc="Grid Search Progress"):
+    with strategy.scope():
+        model = build_complex_model(X.shape[1], output_size, *params)
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-        if accuracy > best_accuracy:
-            best_accuracy = max(accuracy, best_accuracy)
-            best_params = params
+    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
 
-    return best_accuracy, best_params
+    # Evaluate the model
+    _, accuracy = model.evaluate(X_test, y_test, verbose=0)
 
-def main():
-    # Reset TensorFlow session and graph
-    tf.keras.backend.clear_session()
+    tqdm.write(f'Model Accuracy for {params}: {accuracy}')
 
-    # Load the IMDb dataset
-    imdb_df = load_imdb_dataset()
+    if accuracy > best_accuracy:
+        best_accuracy = max(accuracy, best_accuracy)
+        best_params = params
 
-    # Initialize tokenizer
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-    # Extract and preprocess data
-    extracted_data = [preprocess_review_data(review, tokenizer) for review in imdb_df['review']]
-
-    # Determine the maximum lengths
-    max_review_length = max([len(data['review_token']) for data in extracted_data])
-    max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
-
-    # Preprocess DataFrame
-    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-
-    # Split data
-    X = np.array(extracted_df['review_token'].tolist())
-    Y = np.array(extracted_df['movie_names_token'].tolist())
-    output_size = Y.shape[1]
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-
-
-    # Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
-    param_grid = {
-        'num_layers': range(1),
-        'layer_size': [256 * i for i in range(1)],  # Increase the layer size
-        'dropout_rate': [0.2 * i for i in range(1)],
-        'num_heads': [i * 2 for i in range(1)],
-    }
-
-    # Perform grid search
-    best_accuracy, best_params = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
-
-    print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
-
-if __name__ == "__main__":
-    main()
-
-
-
+print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
 # ======== Single computer search ===========
 # # Modify the model with Multi-Head Attention
