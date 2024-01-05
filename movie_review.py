@@ -9,7 +9,7 @@ from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
 from processors.normalizer import Normalizer
 from models.multiheads import MultiHeadAttention
-from processors.train_test_split import train_test_split, output_size
+from processors.train_test_split import data_split, get_output_size
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -21,9 +21,9 @@ extracted_df = TokenizedText().tokenized(imdb_df)
 
 df = Normalizer().normalize(extracted_df)
 
-output_size = output_size(df)
+output_size = get_output_size(df)
 
-X_train, X_test, y_train, y_test = train_test_split(df)
+X_train, X_test, y_train, y_test = data_split(df)
 
 
 # ======== Multi-computer search ===========
