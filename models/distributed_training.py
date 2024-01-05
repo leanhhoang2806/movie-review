@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from transformers import TFBertModel
-from multiheads import MultiHeadAttention
+from models.multiheads import MultiHeadAttention
 
 
 def build_complex_model(input_shape, output_size, num_layers, layer_size, dropout_rate, num_heads):
