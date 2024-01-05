@@ -16,7 +16,7 @@ data_loader = DataLoader(csv_file_path)
 imdb_df = data_loader.read_to_pandas()
 
 # Create a new DataFrame from the list of extracted data
-extracted_df = TokenizedText.tokenized(imdb_df)
+extracted_df = TokenizedText().tokenized(imdb_df)
 
 # Determine the maximum lengths
 max_review_length = max(extracted_df['review_token'].apply(len))
