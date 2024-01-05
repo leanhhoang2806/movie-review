@@ -8,6 +8,8 @@ import tensorflow as tf
 from transformers import TFBertModel
 from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
