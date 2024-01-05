@@ -159,7 +159,7 @@ param_grid = {
     'num_layers': [i for i in range(1, 5)],
     'layer_size': [256*2*i for i in range(1, 5)],  # Increase the layer size
     'dropout_rate': [0.2 * 1 for i in range(1, 5)],
-    'num_heads': [i for i in range(1, 10, 2)],
+    'num_heads': [i for i in range(2, 11, 2)],
 }
 
 # Perform a grid search with tqdm progress bar
