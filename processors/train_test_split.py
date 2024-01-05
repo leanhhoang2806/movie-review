@@ -11,3 +11,7 @@ def data_split(df):
 def get_output_size(df):
     Y = np.array(df['movie_names_token'].tolist())
     return Y.shape[1]
+
+def get_input_shape(df):
+    X = np.array(df['review_token'].tolist())
+    return X.shape[1]
