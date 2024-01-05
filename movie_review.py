@@ -11,6 +11,7 @@ from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 import itertools
 from tqdm import tqdm
+import tensorflow as tf
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -63,10 +64,8 @@ extracted_df['review_token'] = extracted_df['review_token'].apply(lambda x: pad_
 extracted_df['movie_names_token'] = extracted_df['movie_names_token'].apply(lambda x: pad_sequences([x], maxlen=max_movie_length, padding='post', truncating='post')[0])
 df = extracted_df[['review_token', 'movie_names_token']]
 
-print(df.head())
 
 
-import tensorflow as tf
 X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
@@ -150,20 +149,38 @@ def build_complex_model(input_shape, output_size, num_layers, layer_size, dropou
 
     model = tf.keras.models.Model(inputs=inputs, outputs=x)
     return model
-# Use MirroredStrategy for model parallelism
-strategy = tf.distribute.MirroredStrategy()
 
-with strategy.scope():
-    # Create the model in the strategy's scope
-    model = build_complex_model(X.shape[1], output_size, num_layers=2, layer_size=256, dropout_rate=0.5, num_heads=4)
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Train the model
-model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2)
+# Use OneDeviceStrategy for model parallelism in a single GPU environment
+strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
 
-# Evaluate the model
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f'Model Accuracy: {accuracy}')
+# Define a grid of hyperparameters to search over (including Multi-Head Attention parameters)
+param_grid = {
+    'num_layers': [1, 2, 3],
+    'layer_size': [64, 128, 256],  # Increase the layer size
+    'dropout_rate': [0.2, 0.5],
+    'num_heads': [2, 4, 8],
+    'num_neurons': [64, 128, 256],  # Include different numbers of neurons
+}
+
+# Perform a grid search with tqdm progress bar
+best_accuracy = 0
+best_model = None
+
+# Wrap tqdm around itertools.product to show progress
+for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itertools.product(*param_grid.values()))), desc="Grid Search Progress"):
+    with strategy.scope():
+        model = build_complex_model(X.shape[1], output_size, *params)
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
+
+    # Evaluate the model
+    _, accuracy = model.evaluate(X_test, y_test, verbose=0)
+
+    tqdm.write(f'Model Accuracy for {params}: {accuracy}')
+
+    best_accuracy = max(accuracy, best_accuracy)
 
 # ======== Single computer search ===========
 # # Modify the model with Multi-Head Attention
