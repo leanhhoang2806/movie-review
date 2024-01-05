@@ -9,7 +9,7 @@ from data_loader.load_imdb import DataLoader
 from processors.tokenizer import TokenizedText
 from processors.normalizer import Normalizer
 from models.multiheads import MultiHeadAttention
-from processors.train_test_split import train_test_split, output_size
+from processors.train_test_split import data_split
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
@@ -27,7 +27,7 @@ X = np.array(df['review_token'].tolist())
 Y = np.array(df['movie_names_token'].tolist())
 output_size = Y.shape[1]
 
-X_train, X_test, y_train, y_test = train_test_split(df)
+X_train, X_test, y_train, y_test = data_split(df)
 
 
 # ======== Multi-computer search ===========
