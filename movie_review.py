@@ -1,60 +1,22 @@
-import pandas as pd
-import re
-import string
 import numpy as np
-from itertools import chain
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from transformers import BertTokenizer
 from tensorflow.keras.layers import Input, Dense, LayerNormalization, Flatten
-from tensorflow.keras.models import Model
 import itertools
 from tqdm import tqdm
 import tensorflow as tf
 from transformers import TFBertModel
+from data_loader.load_imdb import DataLoader
+from processors.tokenizer import TokenizedText
 
 # Load the IMDb dataset
 csv_file_path = './IMDB Dataset.csv'
-imdb_df = pd.read_csv(csv_file_path)
-
-# Define a regular expression pattern for extracting text between quotation marks
-movie_name_pattern = re.compile(r'"([^"]+)"')
-
-# Initialize an empty list to store extracted data
-extracted_data = []
-
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-def get_bert_token(word):
-    token_ids = tokenizer.encode(word, add_special_tokens=False, padding=True, truncation=True, max_length=512)
-    return token_ids
-
-# Loop through each review and extract text between quotation marks
-for review in imdb_df['review']:
-    # Extract text between quotation marks using the defined pattern
-    matches = re.findall(movie_name_pattern, review)
-
-    # Filter out names that are not in capitalization format
-    valid_names = [name for name in matches if name.istitle()]
-
-    # Clean up punctuation at the beginning or end of each title
-    cleaned_names = [name.strip(string.punctuation) for name in valid_names]
-
-    # Append the review and cleaned text to the list if the list is not empty
-    if cleaned_names and len(cleaned_names) == 1:
-        corrected_name = cleaned_names[0].strip()
-        if len(corrected_name.split()) == 2:
-            # Get BERT token for movie name
-            movie_name_tokens_nested = [get_bert_token(token) for token in corrected_name.split()]
-            movie_name_tokens_flatten = list(chain(*movie_name_tokens_nested))
-
-            # Get BERT token for review
-            review_tokens = get_bert_token(review)
-            extracted_data.append({'review_token': review_tokens, 'movie_names_token': movie_name_tokens_flatten, "review": review, "movie_names": corrected_name})
+data_loader = DataLoader(csv_file_path)
+imdb_df = data_loader.read_to_pandas()
 
 # Create a new DataFrame from the list of extracted data
-extracted_df = pd.DataFrame(extracted_data)
+extracted_df = TokenizedText.tokenized(imdb_df)
 
 # Determine the maximum lengths
 max_review_length = max(extracted_df['review_token'].apply(len))
