@@ -159,7 +159,7 @@ param_grid = {
     'num_layers': [i for i in range(1, 5)],
     'layer_size': [256*2*i for i in range(1, 5)],  # Increase the layer size
     'dropout_rate': [0.2 * 1 for i in range(1, 5)],
-    'num_heads': [i for i in range(2, 11, 2)],
+    'num_heads': [i*2 for i in range(1,5)],
 }
 
 # Perform a grid search with tqdm progress bar
@@ -172,10 +172,10 @@ for params in tqdm(itertools.product(*param_grid.values()), total=len(list(itert
         model = build_complex_model(X.shape[1], output_size, *params)
         model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=0)
+    model.fit(X_train, y_train, epochs=5, batch_size=32, validation_split=0.2, verbose=-1)
 
     # Evaluate the model
-    _, accuracy = model.evaluate(X_test, y_test, verbose=0)
+    _, accuracy = model.evaluate(X_test, y_test, verbose=-1)
 
     tqdm.write(f'Model Accuracy for {params}: {accuracy}')
 
