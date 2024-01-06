@@ -10,6 +10,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense, Dropout, Input, LayerNormalization, Flatten
 from tensorflow.keras.models import Model
 from tqdm import tqdm
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Reset TensorFlow session and graph
 tf.keras.backend.clear_session()
