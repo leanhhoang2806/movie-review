@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
 import tensorflow as tf
-from data_loader import load_imdb_dataset
+from data_loader.load_imdb import load_imdb_dataset
 from tokenizer import preprocess_review_data, preprocess_df
 from training_strategy import grid_search
 
