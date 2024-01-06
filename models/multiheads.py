@@ -49,7 +49,7 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         return outputs
 
     # Scaled Dot-Product Attention Layer
-    def _scaled_dot_product_attention(self, query, key, value):
+    def _scaled_dot_product_attention(query, key, value):
         matmul_qk = tf.matmul(query, key, transpose_b=True)
         dk = tf.cast(tf.shape(key)[-1], tf.float32)
         scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
