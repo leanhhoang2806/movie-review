@@ -1,5 +1,5 @@
 import tensorflow as tf
-import tqdm
+from tqdm import tqdm
 from itertools import product
 from models.model_builder import build_complex_model
 
