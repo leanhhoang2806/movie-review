@@ -52,16 +52,8 @@ def main():
 
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     current_directory = os.getcwd()
-    directory_path = current_directory + 'predicted_movie_names.csv'
-    print(f"Saving to {directory_path}")
+    best_model.save(current_directory + '/best_model.h5')
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
-
-    predicted_df = predict_movie_name(extracted_df, best_model, tokenizer)
-    print(predicted_df.head())
-    # Create the directory if it doesn't exist
-    os.makedirs(directory_path, exist_ok=True)
-    print(predicted_df.head())
-    predicted_df.to_csv(directory_path, index=False)
 
 if __name__ == "__main__":
     main()
