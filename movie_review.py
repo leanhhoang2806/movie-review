@@ -8,6 +8,7 @@ from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
 from predictions.predictor import predict_movie_name
+import os
 
 def main():
     tf.keras.backend.clear_session()
@@ -54,8 +55,14 @@ def main():
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
     predicted_df = predict_movie_name(extracted_df, best_model)
+
+    current_directory = os.getcwd()
+    directory_path = current_directory + 'predicted_movie_names.csv'
+    print(f"Saving to {directory_path}")
+    # Create the directory if it doesn't exist
+    os.makedirs(directory_path, exist_ok=True)
     print(predicted_df.head())
-    predicted_df.to_csv('predicted_movie_names.csv', index=False)
+    predicted_df.to_csv(directory_path, index=False)
 
 if __name__ == "__main__":
     main()
