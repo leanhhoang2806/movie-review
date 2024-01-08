@@ -23,6 +23,13 @@ $virtualenv -p /usr/local/bin/python3.8 myenv
 # Docker clean up
 sudo docker system prune
 
+# Useful command line
+ls /usr/bin/python*
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.8 -y
+sudo apt install python3.8-venv -y
+sudo apt update
+python3.8 -m venv myenv
 
 instruction on installing nvidia container toolkit 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
