@@ -1,5 +1,6 @@
 
 import re
+import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
@@ -59,6 +60,14 @@ def main():
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     container_path = '/app/best_model.h5'
     best_model.save(container_path)
+
+    predictions = best_model.predict(X_test[0:1])
+    # Create a new DataFrame with predicted results
+    predicted_df = pd.DataFrame(predictions, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
+    predicted_df['actual_movie_name'] = extracted_df.iloc[y_test.argmax(axis=1)]['movie_names'].values
+
+    # Print the head of the predicted results DataFrame
+    print(predicted_df.head())
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
