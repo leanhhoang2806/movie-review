@@ -55,10 +55,12 @@ def main():
     container_path = '/app/best_model.h5'
     directory_outside_container = '/Documents/work/movie-review/best_model.h5'
     best_model.save(container_path)
-    os.makedirs(directory_outside_container, exist_ok=True)
+    # Create the directory on the host if it does not exist
+    os.makedirs(os.path.dirname(directory_outside_container), exist_ok=True)
 
     # Copy the model file to the host location
-    shutil.copy(container_path, directory_outside_container)
+    shutil.copy(container_path, os.path.expanduser(directory_outside_container))
+
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
 if __name__ == "__main__":
