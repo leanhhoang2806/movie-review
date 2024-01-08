@@ -53,13 +53,7 @@ def main():
 
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     container_path = '/app/best_model.h5'
-    directory_outside_container = '/Documents/work/movie-review/best_model.h5'
     best_model.save(container_path)
-    # Create the directory on the host if it does not exist
-    os.makedirs(os.path.dirname(directory_outside_container), exist_ok=True)
-
-    # Copy the model file to the host location
-    shutil.copy(container_path, os.path.expanduser(directory_outside_container))
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
