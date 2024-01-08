@@ -36,6 +36,11 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    data_path = '/app/extracted_data.csv'
+    if not os.path.exists(data_path):
+        extracted_df.to_csv(data_path, index=False)
+    else:
+        print("File 'extracted_data.csv' already exists. Skipping creation.")
 
 
     X = np.array(extracted_df['review_token'].tolist())
