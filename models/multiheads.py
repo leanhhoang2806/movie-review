@@ -56,3 +56,11 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
         output = tf.matmul(attention_weights, value)
         return output
+    
+    def get_config(self):
+        config = super(MultiHeadAttention, self).get_config()
+        config.update({
+            'd_model': self.d_model,
+            'num_heads': self.num_heads
+        })
+        return config
