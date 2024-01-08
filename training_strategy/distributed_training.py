@@ -26,6 +26,8 @@ def grid_search(param_grid, X_train, y_train, X_test, y_test, input_shape, outpu
             best_params = params
             best_model = model
     
-    model.save('./movie_review_model.h5')
+    path = './movie_review_model.h5'
+    print(f'Saving best model to {path}')
+    best_model.save('./movie_review_model.h5')
 
     return best_accuracy, best_params
