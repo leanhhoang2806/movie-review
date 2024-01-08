@@ -55,9 +55,7 @@ def main():
     container_path = '/app/best_model.h5'
     directory_outside_container = '~/Documents/work/movie-review/best_model.h5'
     best_model.save(container_path)
-    # Create the directory on the host if it does not exist
-    host_directory = os.path.dirname(os.path.expanduser(directory_outside_container))
-    os.makedirs(host_directory, exist_ok=True)
+    os.makedirs(directory_outside_container, exist_ok=True)
 
     # Copy the model file to the host location
     shutil.copy(container_path, directory_outside_container)
