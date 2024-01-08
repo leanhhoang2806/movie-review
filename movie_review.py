@@ -7,6 +7,7 @@ import tensorflow as tf
 from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
+from predictions.predictor import predict_movie_name
 
 def main():
     tf.keras.backend.clear_session()
@@ -33,8 +34,7 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-    print(extracted_df.head())
-    return
+
 
     X = np.array(extracted_df['review_token'].tolist())
     Y = np.array(extracted_df['movie_names_token'].tolist())
@@ -52,6 +52,10 @@ def main():
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
+
+    predicted_df = predict_movie_name(extracted_df, best_model)
+    print(predicted_df.head())
+    predicted_df.to_csv('predicted_movie_names.csv', index=False)
 
 if __name__ == "__main__":
     main()
