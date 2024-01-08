@@ -52,6 +52,8 @@ def main():
 
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     current_directory = os.getcwd()
+    model_path = current_directory + '/best_model.h5'
+    print(f"Saving model to {model_path}")
     best_model.save(current_directory + '/best_model.h5')
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
