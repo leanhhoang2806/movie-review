@@ -22,10 +22,10 @@ def save_to_csv(data, output_path):
 
 if __name__ == "__main__":
     # Replace 'your_data.csv' with the path to your CSV file
-    input_csv_path = '/Documents/work/movie-review/extracted_data.csv'
+    input_csv_path = './extracted_data.csv'
 
     # Replace 'your_model.h5' with the path to your TensorFlow model file
-    model_path = '/Documents/work/movie-review/best_model.h5'
+    model_path = './best_model.h5'
 
     # Replace 'output_predictions.csv' with the desired output CSV file path
     output_csv_path = './output_predictions.csv'
