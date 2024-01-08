@@ -53,7 +53,7 @@ def main():
 
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     container_path = '/app/best_model.h5'
-    directory_outside_container = '~/Documents/work/movie-review/best_model.h5'
+    directory_outside_container = '/Documents/work/movie-review/best_model.h5'
     best_model.save(container_path)
     os.makedirs(directory_outside_container, exist_ok=True)
 
