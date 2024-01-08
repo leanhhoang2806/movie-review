@@ -42,9 +42,9 @@ def main():
 
     param_grid = {
         'num_layers': range(1, 6),
-        'layer_size': [256 * 2 * i for i in range(1, 5)],
+        'layer_size': [256 * i for i in range(1, 5)],
         'dropout_rate': [0.2 * i for i in range(1, 5)],
-        'num_heads': [i * 2 for i in range(1, 5)],
+        'num_heads': [i for i in range(1, 5)],
     }
 
     best_accuracy, best_params = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
