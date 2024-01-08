@@ -21,6 +21,9 @@ def save_to_csv(data, output_path):
     data.to_csv(output_path, index=False)
 
 if __name__ == "__main__":
+
+    print("TensorFlow version:", tf.__version__)
+    print("Keras version:", tf.keras.__version__)
     # Replace 'your_data.csv' with the path to your CSV file
     input_csv_path = './extracted_data.csv'
 
