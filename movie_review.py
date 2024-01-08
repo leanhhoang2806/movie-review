@@ -33,6 +33,8 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    print(extracted_df.head())
+    return
 
     X = np.array(extracted_df['review_token'].tolist())
     Y = np.array(extracted_df['movie_names_token'].tolist())
@@ -47,10 +49,11 @@ def main():
         'num_heads': [i * 2  for i in range(1, 3)],
     }
 
-    best_accuracy, best_params = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
+    best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
 if __name__ == "__main__":
     main()
+
 
