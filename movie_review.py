@@ -9,6 +9,7 @@ from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
 from predictions.predictor import predict_movie_name
 import shutil
+import os
 
 def main():
     tf.keras.backend.clear_session()
@@ -51,8 +52,15 @@ def main():
     }
 
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
+    container_path = '/app/best_model.h5'
     directory_outside_container = '~/Documents/work/movie-review/best_model.h5'
-    best_model.save(directory_outside_container)
+    best_model.save(container_path)
+    # Create the directory on the host if it does not exist
+    host_directory = os.path.dirname(os.path.expanduser(directory_outside_container))
+    os.makedirs(host_directory, exist_ok=True)
+
+    # Copy the model file to the host location
+    shutil.copy(container_path, directory_outside_container)
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
 if __name__ == "__main__":
