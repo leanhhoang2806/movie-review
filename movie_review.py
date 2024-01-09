@@ -66,7 +66,8 @@ def main():
 
     review_token_single_row = extracted_df['review_token'].iloc[0]
     print("Extracted dataframe")
-    predictions = loaded_model.predict([list(review_token_single_row)])
+    input_data = np.array([review_token_single_row])
+    predictions = loaded_model.predict(input_data)
     print(predictions)
 
     # Convert predicted token sequences to a list of lists
