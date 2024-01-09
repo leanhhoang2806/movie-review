@@ -70,6 +70,9 @@ def main():
     predictions = loaded_model.predict(input_data)
     print(f"The predictions is {predictions}")
     print(predictions)
+    predicted_words = tokenizer.convert_ids_to_tokens([int(round(prediction)) for prediction in predictions])
+    print(f"The predicted words are {predicted_words}")
+
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
