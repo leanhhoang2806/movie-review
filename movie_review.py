@@ -70,7 +70,10 @@ def main():
 
     # Convert predicted token IDs back to movie names, removing padding tokens
     predicted_movie_names = []
-    for pred_sequence in predictions.argmax(axis=-1).tolist():
+    for pred_sequence in np.argmax(predictions, axis=-1).tolist():
+        if not isinstance(pred_sequence, list):
+            pred_sequence = [pred_sequence]  # Ensure it's iterable
+
         # Remove padding tokens and convert to movie names
         pred_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in pred_sequence if token_id != 0]
         pred_movie_name = " ".join(pred_tokens)
