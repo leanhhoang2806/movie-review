@@ -37,6 +37,7 @@ def main():
     
     review_token = token_df['review_token'].tolist()
     print("decoded token review")
+    print(f"tokenized review: {review_token[0]}")
     print(tokenizer.decode(review_token[0], skip_special_tokens=True))
 
 
