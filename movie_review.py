@@ -67,18 +67,22 @@ def main():
     print("Extracted dataframe")
     print(extracted_df.head())
     predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
+
+    # If predictions have only two dimensions, add a new axis
     if len(predictions.shape) == 2:
         predictions = np.expand_dims(predictions, axis=2)
-    print("Predictions")
-    print(predictions[0])
+
     # Convert predicted token IDs back to words
-    predicted_movie_names = tokenizer.convert_ids_to_tokens(predictions.argmax(axis=2).tolist())
+    predicted_movie_names = []
+    for pred_sequence in predictions.argmax(axis=2).tolist():
+        predicted_movie_names.append(tokenizer.convert_ids_to_tokens(pred_sequence))
 
     # Create a new DataFrame with predicted results
     predicted_df = pd.DataFrame(predicted_movie_names, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
 
     # Add the actual movie names to the predicted DataFrame
     predicted_df['actual_movie_name'] = extracted_df['actual_movie_name']
+
     print(predicted_df.head())
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
