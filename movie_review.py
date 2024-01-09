@@ -18,14 +18,28 @@ def main():
 
     csv_file_path = './IMDB Dataset.csv'
     imdb_df = load_imdb_dataset(csv_file_path)
-    review_text = imdb_df.iloc[0]['review']
-    print(f"Text To predict : {review_text}")
-    ner_pipeline = pipeline('ner', model='dbmdz/bert-large-cased-finetuned-conll03-english', tokenizer='dbmdz/bert-large-cased-finetuned-conll03-english')
-    entities = ner_pipeline(review_text)
-    print(f"All entities : {entities}")
-    for entity in entities:
-        if entity['entity'] == 'ORG':
-            print(entity['word'])
+    movie_name_pattern = re.compile(r'"([^"]+)"')
+
+    extracted_data = []
+
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+    for review in imdb_df['review']:
+        data = preprocess_review_data(review, tokenizer, movie_name_pattern)
+        if data:
+            extracted_data.append(data)
+
+    if not extracted_data:
+        print("No valid data found. Exiting.")
+        return
+
+    max_review_length = max([len(data['review_token']) for data in extracted_data])
+    max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
+
+    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    token_df = extracted_df[['review_token', 'movie_names_token']]
+    print(token_df.head())
+    print(extracted_df.head())
 
 
 
