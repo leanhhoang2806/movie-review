@@ -80,8 +80,6 @@ def main():
     # Create a new DataFrame with predicted results
     predicted_df = pd.DataFrame(predicted_movie_names, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
 
-    # Add the actual movie names to the predicted DataFrame
-    predicted_df['actual_movie_name'] = extracted_df['actual_movie_name']
 
     print(predicted_df.head())
 
