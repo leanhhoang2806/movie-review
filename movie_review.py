@@ -9,9 +9,17 @@ from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
 from models.model_builder import MultiHeadAttention
-import os
-from transformers import pipeline
 
+def build_model(max_review_length, max_movie_length):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(8, activation='relu'),
+        tf.keras.layers.Dense(1, activation='sigmoid')
+    ])
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    return model
 
 def main():
     tf.keras.backend.clear_session()
@@ -35,10 +43,22 @@ def main():
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     token_df = extracted_df[['review_token', 'movie_names_token']]
     
-    review_token = token_df['review_token'].tolist()
-    print("decoded token review")
-    print(f"tokenized review: {review_token[0]}")
-    print(tokenizer.decode(review_token[0], skip_special_tokens=True))
+    X_train, X_test, y_train, y_test = train_test_split(
+        token_df['review_token'].to_list(), 
+        extracted_df['movie_names_token'].to_list(),
+        test_size=0.2, 
+        random_state=42
+    )
+
+
+    model = build_model(max_review_length, max_movie_length)
+
+    # Train the model
+    model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
+
+    # Evaluate the model
+    loss, accuracy = model.evaluate(X_test, y_test)
+    print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
 
 
