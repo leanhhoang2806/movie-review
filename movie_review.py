@@ -29,17 +29,14 @@ def main():
         if data:
             extracted_data.append(data)
 
-    if not extracted_data:
-        print("No valid data found. Exiting.")
-        return
-
     max_review_length = max([len(data['review_token']) for data in extracted_data])
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     token_df = extracted_df[['review_token', 'movie_names_token']]
-    print(token_df.head())
-    print(extracted_df.head())
+    
+    review_token = token_df['review_token'].tolist()
+    print(tokenizer.sequences_to_texts(review_token))
 
 
 
