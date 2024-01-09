@@ -64,8 +64,9 @@ def main():
     # Load the saved model
     loaded_model = tf.keras.models.load_model(container_path, custom_objects)
 
+    review_token_single_row = extracted_df['review_token'].iloc[0]
     print("Extracted dataframe")
-    predictions = loaded_model.predict(np.array([extracted_df.iloc[3]]))
+    predictions = loaded_model.predict([list(review_token_single_row)])
     print(predictions)
 
     # Convert predicted token sequences to a list of lists
