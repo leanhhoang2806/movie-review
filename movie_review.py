@@ -67,7 +67,10 @@ def main():
     print("Extracted dataframe")
     print(extracted_df.head())
     predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
-
+    if len(predictions.shape) == 2:
+        predictions = np.expand_dims(predictions, axis=2)
+    print("Predictions")
+    print(predictions[0])
     # Convert predicted token IDs back to words
     predicted_movie_names = tokenizer.convert_ids_to_tokens(predictions.argmax(axis=2).tolist())
 
