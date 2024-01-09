@@ -8,7 +8,7 @@ import tensorflow as tf
 from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
-from predictions.predictor import predict_movie_name
+from models.model_builder import MultiHeadAttention
 import os
 
 def main():
@@ -56,12 +56,13 @@ def main():
         'num_heads': [4],
     }
 
+    custom_objects = {'MultiHeadAttention': MultiHeadAttention}
+
     best_accuracy, best_params, best_model = grid_search(param_grid, X_train, y_train, X_test, y_test, X.shape[1], output_size)
     container_path = '/app/best_model.h5'
     best_model.save(container_path)
-
     # Load the saved model
-    loaded_model = tf.keras.models.load_model(container_path)
+    loaded_model = tf.keras.models.load_model(container_path, custom_objects)
 
     # Perform predictions on the test data
     predictions = loaded_model.predict(X_test)
