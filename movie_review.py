@@ -75,8 +75,9 @@ def main():
             pred_sequence = [pred_sequence]  # Ensure it's iterable
 
         # Remove padding tokens and convert to movie names
-        pred_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in pred_sequence if token_id != 0]
-        pred_movie_name = " ".join(pred_tokens)
+        pred_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in pred_sequence]
+        pred_movie_name = tokenizer.convert_tokens_to_string(pred_tokens)
+
         predicted_movie_names.append(pred_movie_name)
 
     # Create a new DataFrame with predicted results
