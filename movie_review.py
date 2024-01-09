@@ -68,17 +68,16 @@ def main():
     print(extracted_df.head())
     predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
 
-    # If predictions have only two dimensions, add a new axis
-    if len(predictions.shape) == 2:
-        predictions = np.expand_dims(predictions, axis=2)
-
-    # Convert predicted token IDs back to words
+    # Convert predicted token IDs back to movie names, removing padding tokens
     predicted_movie_names = []
     for pred_sequence in predictions.argmax(axis=2).tolist():
-        predicted_movie_names.append(tokenizer.convert_ids_to_tokens(pred_sequence))
+        # Remove padding tokens and convert to movie names
+        pred_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in pred_sequence if token_id != 0]
+        pred_movie_name = " ".join(pred_tokens)
+        predicted_movie_names.append(pred_movie_name)
 
     # Create a new DataFrame with predicted results
-    predicted_df = pd.DataFrame(predicted_movie_names, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
+    predicted_df = pd.DataFrame(predicted_movie_names, columns=['predicted_movie_name'])
 
 
     print(predicted_df.head())
