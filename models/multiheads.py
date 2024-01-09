@@ -3,7 +3,7 @@ from tensorflow.keras.layers import Dense, Dense
 
 
 class MultiHeadAttention(tf.keras.layers.Layer):
-    def __init__(self, d_model, num_heads, name='multi_head_attention'):
+    def __init__(self, d_model, num_heads, name='multi_head_attention', trainable=True):
         super(MultiHeadAttention, self).__init__()
         self.num_heads = num_heads
         self.d_model = d_model
