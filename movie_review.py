@@ -65,8 +65,8 @@ def main():
     loaded_model = tf.keras.models.load_model(container_path, custom_objects)
 
     print("Extracted dataframe")
-    print(extracted_df.iloc[3])
-    predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
+    predictions = loaded_model.predict(np.array(extracted_df.iloc[3]))
+    print(predictions)
 
     # Convert predicted token sequences to a list of lists
     predicted_token_sequences = np.argmax(predictions, axis=-1).tolist()
