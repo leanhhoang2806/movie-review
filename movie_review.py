@@ -65,7 +65,7 @@ def main():
     loaded_model = tf.keras.models.load_model(container_path, custom_objects)
 
     print("Extracted dataframe")
-    print(extracted_df.iloc[0])
+    print(extracted_df.iloc[3])
     predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
 
     # Convert predicted token sequences to a list of lists
