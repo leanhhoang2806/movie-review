@@ -36,6 +36,7 @@ def main():
     token_df = extracted_df[['review_token', 'movie_names_token']]
     
     review_token = token_df['review_token'].tolist()
+    print("decoded token review")
     print(tokenizer.decode(review_token[0], skip_special_tokens=True))
 
 
