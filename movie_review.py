@@ -9,7 +9,6 @@ from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
 from predictions.predictor import predict_movie_name
-import shutil
 import os
 
 def main():
@@ -61,7 +60,12 @@ def main():
     container_path = '/app/best_model.h5'
     best_model.save(container_path)
 
-    predictions = best_model.predict(X_test[0:1])
+    # Load the saved model
+    loaded_model = tf.keras.models.load_model(container_path)
+
+    # Perform predictions on the test data
+    predictions = loaded_model.predict(X_test)
+
     # Create a new DataFrame with predicted results
     predicted_df = pd.DataFrame(predictions, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
     predicted_df['actual_movie_name'] = extracted_df.iloc[y_test.argmax(axis=1)]['movie_names'].values

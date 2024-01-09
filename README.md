@@ -33,3 +33,6 @@ python3.8 -m venv myenv
 
 instruction on installing nvidia container toolkit 
 https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+
+git pull && sudo docker stop worker-0 | true && sudo docker rm worker-0 | true && sudo docker rmi --force my_tensorflow_app && sudo docker build -t my_tensorflow_app . && sudo docker run -a stdout -a stderr --gpus all -p 2222:2222 -e TF_CONFIG='{"cluster": {"worker": ["192.168.1.101:2222", "192.168.1.102:2222"]}, "task": {"type": "worker", "index": 0}}' --name worker-0  my_tensorflow_app && sudo docker cp worker-0:/app/best_model.h5 ~/Documents/work/movie-review/best_model.h5 && sudo docker cp worker-0:/app/extracted_data.csv ~/Documents/work/movie-review/extracted_data.csv
