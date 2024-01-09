@@ -22,6 +22,7 @@ def main():
     print(f"Text To predict : {review_text}")
     ner_pipeline = pipeline('ner', model='dbmdz/bert-large-cased-finetuned-conll03-english', tokenizer='dbmdz/bert-large-cased-finetuned-conll03-english')
     entities = ner_pipeline(review_text)
+    print(f"All entities : {entities}")
     for entity in entities:
         if entity['entity'] == 'ORG':
             print(entity['word'])
