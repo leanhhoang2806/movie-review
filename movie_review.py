@@ -68,20 +68,12 @@ def main():
     print(extracted_df.head())
     predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
 
-    # Convert predicted token IDs back to movie names, removing padding tokens
-    predicted_movie_names = []
-    for pred_sequence in np.argmax(predictions, axis=-1).tolist():
-        if not isinstance(pred_sequence, list):
-            pred_sequence = [pred_sequence]  # Ensure it's iterable
+    # Convert predicted token sequences to a list of lists
+    predicted_token_sequences = np.argmax(predictions, axis=-1).tolist()
 
-        # Remove padding tokens and convert to movie names
-        pred_tokens = [tokenizer.convert_ids_to_tokens(token_id) for token_id in pred_sequence]
-        pred_movie_name = tokenizer.convert_tokens_to_string(pred_tokens)
+    # Create a new DataFrame with predicted token sequences
+    predicted_df = pd.DataFrame({'predicted_movie_name': predicted_token_sequences})
 
-        predicted_movie_names.append(pred_movie_name)
-
-    # Create a new DataFrame with predicted results
-    predicted_df = pd.DataFrame(predicted_movie_names, columns=['predicted_movie_name'])
 
 
     print(predicted_df.head())
