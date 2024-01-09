@@ -16,15 +16,15 @@ def preprocess_review_data(review, tokenizer, movie_name_pattern):
     if movie_names:
         movie_names_tokens = tokenizer.encode(movie_names[0], add_special_tokens=True)
         return {'review_token': review_tokens, 'movie_names_token': movie_names_tokens}
-    return None
+    else:
+        return {'review_token': review_tokens, 'movie_names_token': []}
 
-def preprocess_df(extracted_data, max_review_length, max_movie_length):
+def preprocess_df(extracted_data, max_review_length):
     extracted_df = pd.DataFrame(extracted_data)
     extracted_df['review_token'] = pad_sequences(extracted_df['review_token'], maxlen=max_review_length, padding='post', truncating='post').tolist()
-    extracted_df['movie_names_token'] = pad_sequences(extracted_df['movie_names_token'], maxlen=max_movie_length, padding='post', truncating='post').tolist()
     return extracted_df
 
-def build_model(max_review_length, max_movie_length):
+def build_model(max_review_length):
     model = tf.keras.Sequential([
         tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
         tf.keras.layers.Flatten(),
@@ -51,25 +51,24 @@ def main():
             extracted_data.append(data)
 
     max_review_length = max([len(data['review_token']) for data in extracted_data])
-    max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
-    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-    token_df = extracted_df[['review_token', 'movie_names_token', 'label']]  # assuming you have a 'label' column in your dataframe
+    extracted_df = preprocess_df(extracted_data, max_review_length)
+    token_df = extracted_df[['review_token', 'movie_names_token']]
 
     X_train, X_test, y_train, y_test = train_test_split(
-        token_df[['review_token', 'movie_names_token']], 
-        token_df['label'],
+        token_df['review_token'], 
+        token_df['movie_names_token'].apply(lambda x: 1 if len(x) > 0 else 0),  # Label: 1 if 'movie_names_token' is present, else 0
         test_size=0.2, 
         random_state=42
     )
 
-    model = build_model(max_review_length, max_movie_length)
+    model = build_model(max_review_length)
 
     # Train the model
-    model.fit({'review_token': X_train['review_token'], 'movie_names_token': X_train['movie_names_token']}, y_train, epochs=10, validation_data=({'review_token': X_test['review_token'], 'movie_names_token': X_test['movie_names_token']}, y_test))
+    model.fit(X_train, y_train, epochs=10, validation_data=(X_test, y_test))
 
     # Evaluate the model
-    loss, accuracy = model.evaluate({'review_token': X_test['review_token'], 'movie_names_token': X_test['movie_names_token']}, y_test)
+    loss, accuracy = model.evaluate(X_test, y_test)
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
 if __name__ == "__main__":
