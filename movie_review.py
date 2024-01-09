@@ -64,14 +64,18 @@ def main():
     # Load the saved model
     loaded_model = tf.keras.models.load_model(container_path, custom_objects)
 
-    # Perform predictions on the test data
-    predictions = loaded_model.predict(X_test)
+    print("Extracted dataframe")
+    print(extracted_df.head())
+    predictions = loaded_model.predict(np.array(extracted_df['review_token'].tolist()))
+
+    # Convert predicted token IDs back to words
+    predicted_movie_names = tokenizer.convert_ids_to_tokens(predictions.argmax(axis=2).tolist())
 
     # Create a new DataFrame with predicted results
-    predicted_df = pd.DataFrame(predictions, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
-    predicted_df['actual_movie_name'] = extracted_df.iloc[y_test.argmax(axis=1)]['movie_names'].values
+    predicted_df = pd.DataFrame(predicted_movie_names, columns=[f'predicted_movie_name_{i}' for i in range(predictions.shape[1])])
 
-    # Print the head of the predicted results DataFrame
+    # Add the actual movie names to the predicted DataFrame
+    predicted_df['actual_movie_name'] = extracted_df['actual_movie_name']
     print(predicted_df.head())
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
