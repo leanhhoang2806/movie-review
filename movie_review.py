@@ -68,17 +68,8 @@ def main():
     print("Extracted dataframe")
     input_data = np.array([review_token_single_row])
     predictions = loaded_model.predict(input_data)
+    print(f"The predictions is {predictions}")
     print(predictions)
-
-    # Convert predicted token sequences to a list of lists
-    predicted_token_sequences = np.argmax(predictions, axis=-1).tolist()
-
-    # Create a new DataFrame with predicted token sequences
-    predicted_df = pd.DataFrame({'predicted_movie_name': predicted_token_sequences})
-
-
-
-    print(predicted_df.head())
 
     print(f'Best Model Accuracy: {best_accuracy} with best params: {best_params}')
 
