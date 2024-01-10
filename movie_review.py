@@ -64,6 +64,8 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
     model = build_model(max_review_length, max_movie_length)
 
+    print(f"X_train.shape: {X_train.shape}")
+    print(f"Y_train.shape: {y_train.shape}")
     # Train the model
     model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test))
 
