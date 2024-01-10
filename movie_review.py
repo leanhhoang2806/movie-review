@@ -56,7 +56,7 @@ def main():
 
     extracted_df = preprocess_df(extracted_data, max_review_length)
     token_df = extracted_df[['review_token', 'movie_names_token']]
-
+    print(f"type of toekn_df['review_token']: {type(token_df['review_token'])}")
     X = np.array(token_df['review_token'])
     Y = np.array(token_df['movie_names_token'])
 
