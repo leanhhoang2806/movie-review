@@ -21,9 +21,13 @@ def preprocess_review_data(review, tokenizer, movie_name_pattern):
     else:
         return {'review_token': review_tokens, 'movie_names_token': []}
 
-def preprocess_df(extracted_data, max_review_length):
+def preprocess_df(extracted_data, max_review_length, max_movie_length):
     extracted_df = pd.DataFrame(extracted_data)
+    
+    # Pad sequences with variable lengths
     extracted_df['review_token'] = pad_sequences(extracted_df['review_token'], maxlen=max_review_length, padding='post', truncating='post').tolist()
+    extracted_df['movie_names_token'] = pad_sequences(extracted_df['movie_names_token'], maxlen=max_movie_length, padding='post', truncating='post').tolist()
+
     return extracted_df
 
 def build_model(max_review_length, max_movie_length):
