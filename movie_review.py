@@ -58,6 +58,7 @@ def main():
     token_df = extracted_df[['review_token', 'movie_names_token']]
     print(f"type of toekn_df['review_token']: {type(token_df['review_token'])}")
     X = np.array(token_df['review_token'])
+    print(f"type of X: {type(X)}")
     Y = np.array(token_df['movie_names_token'])
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
