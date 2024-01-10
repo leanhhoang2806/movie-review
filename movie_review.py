@@ -40,6 +40,10 @@ def build_model(max_review_length, max_movie_length):
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
+def convert_tokens_to_words(tokenizer, tokens):
+    words = tokenizer.convert_ids_to_tokens(tokens)
+    return " ".join(words)
+
 def main():
     tf.keras.backend.clear_session()
 
@@ -111,6 +115,21 @@ def main():
     # Evaluate the model
     mse = mean_squared_error(y_test_flat, y_pred_flat)
     print(f'Mean Squared Error: {mse}')
-        
+
+    # Create a new DataFrame to store the results
+    results_df = pd.DataFrame(columns=['Original Review', 'Predicted Movie Names'])
+
+    # Iterate through each test example
+    for i in range(len(X_test)):
+        original_review = imdb_df['review'].iloc[X_test[i].tolist()]
+        predicted_movie_names_tokens = y_pred[i].argmax(axis=1)
+        predicted_movie_names = convert_tokens_to_words(tokenizer, predicted_movie_names_tokens)
+
+        # Append results to the DataFrame
+        results_df = results_df.append({'Original Review': original_review, 'Predicted Movie Names': predicted_movie_names}, ignore_index=True)
+
+    print(results_df.head())
+
+    
 if __name__ == "__main__":
     main()
