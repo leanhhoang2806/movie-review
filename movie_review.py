@@ -88,10 +88,12 @@ def main():
     # Build a simple neural network using TensorFlow's Keras API
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(10, activation='relu', input_shape=(max_review_length,)),
-        tf.keras.layers.Dense(max_movie_length, activation='softmax')  # Use sigmoid activation for multi-label classification
+        tf.keras.layers.Dense(max_movie_length, activation='softmax'),
+        tf.keras.layers.Reshape((max_movie_length, 1))
     ])
 
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
 
 
 
