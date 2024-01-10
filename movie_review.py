@@ -61,27 +61,33 @@ def main():
     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
     Y = np.array([np.array(token_list) for token_list in token_df['movie_names_token']])
 
-    # Check the shape of Y
-    print("Shape of Y before reshaping:", Y.shape)
-
-    # Add a new dimension if the array is 1D
-    if len(Y.shape) == 1:
-        Y = Y.reshape((-1, 1))
 
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
+    print(f"Type of X_train: {type(X_train)}, Type of y_train: {type(y_train)}")
+    print(f"Type of X_test: {type(X_test)}, Type of y_test: {type(y_test)}")
+
+    # Reshape y_train and y_test if needed
+    Y_train = y_train.reshape((y_train.shape[0], y_train.shape[1], 1))
+    Y_test = y_test.reshape((y_test.shape[0], y_test.shape[1], 1))
+
+    # Check the shape of Y_train and Y_test
+    print(f"Shape of Y_train after reshaping: {Y_train.shape}")
+    print(f"Shape of Y_test after reshaping: {Y_test.shape}")
+
     # Build a simple neural network using TensorFlow's Keras API
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(10, activation='relu', input_shape=(1,)),
-        tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(10, activation='relu', input_shape=(max_review_length,)),
+        tf.keras.layers.Dense(max_movie_length, activation='softmax')
     ])
 
     # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     # Train the model
-    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+    model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test))
+
 
     # Make predictions on the test set
     y_pred = model.predict(X_test)
