@@ -2,7 +2,6 @@ import pandas as pd
 import re
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
@@ -35,13 +34,13 @@ def build_model(max_review_length, max_movie_length):
         tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.Dense(max_movie_length, activation='softmax')  # Assuming max_movie_length is the vocabulary size
+        tf.keras.layers.Dense(max_movie_length * 30522, activation='softmax')  # Adjust the output dimension
     ])
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 def convert_tokens_to_words(tokenizer, tokens):
-    words = tokenizer.convert_tokens_to_string(tokens)
+    words = tokenizer.convert_ids_to_tokens(tokens)
     return " ".join(words)
 
 def main():
@@ -70,50 +69,35 @@ def main():
     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
     Y = np.array([np.array(token_list) for token_list in token_df['movie_names_token']])
 
-
-
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-
-    Y_train = np.array([np.array(token_list) for token_list in y_train])
-    Y_test = np.array([np.array(token_list) for token_list in y_test])
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
     # Check the shape of Y_train and Y_test
     print(f"Shape of Y_train before reshaping: {Y_train.shape}")
     print(f"Shape of Y_test before reshaping: {Y_test.shape}")
 
     # Reshape Y_train and Y_test
-    Y_train = Y_train.reshape((Y_train.shape[0], Y_train.shape[1], 1))
-    Y_test = Y_test.reshape((Y_test.shape[0], Y_test.shape[1], 1))
+    Y_train = Y_train.reshape((Y_train.shape[0], -1))
+    Y_test = Y_test.reshape((Y_test.shape[0], -1))
 
     # Check the shape of Y_train and Y_test after reshaping
     print(f"Shape of Y_train after reshaping: {Y_train.shape}")
     print(f"Shape of Y_test after reshaping: {Y_test.shape}")
 
     # Build a simple neural network using TensorFlow's Keras API
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(10, activation='relu', input_shape=(max_review_length,)),
-        tf.keras.layers.Dense(max_movie_length, activation='softmax'),
-        tf.keras.layers.Reshape((max_movie_length, 1))
-    ])
-
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-
-
-
+    model = build_model(max_review_length, max_movie_length)
 
     # Train the model
     model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test))
-
 
     # Make predictions on the test set
     y_pred = model.predict(X_test)
 
     # Flatten y_pred and y_test
-    y_pred_flat = y_pred.reshape((y_pred.shape[0], -1))
-    y_test_flat = Y_test.reshape((Y_test.shape[0], -1))
+    y_pred_flat = y_pred.argmax(axis=1)
+    Y_test_flat = Y_test.argmax(axis=1)
 
     # Evaluate the model
-    mse = mean_squared_error(y_test_flat, y_pred_flat)
+    mse = mean_squared_error(Y_test_flat, y_pred_flat)
     print(f'Mean Squared Error: {mse}')
 
     # Create a new DataFrame to store the results
@@ -122,7 +106,7 @@ def main():
     # Iterate through each test example
     for i in range(len(X_test)):
         original_review = imdb_df['review'].iloc[X_test[i].tolist()]
-        predicted_movie_names_tokens = y_pred[i].argmax(axis=1)
+        predicted_movie_names_tokens = y_pred[i].argmax(axis=0)
         predicted_movie_names = convert_tokens_to_words(tokenizer, predicted_movie_names_tokens)
 
         # Append results to the DataFrame
@@ -130,6 +114,5 @@ def main():
 
     print(results_df.head())
 
-    
 if __name__ == "__main__":
     main()
