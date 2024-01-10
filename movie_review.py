@@ -6,6 +6,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
+from sklearn.metrics import mean_squared_error
 
 def load_imdb_dataset(file_path):
     imdb_df = pd.read_csv(file_path)
@@ -62,16 +63,25 @@ def main():
     Y = np.array(token_df['movie_names_token'].to_list())
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-    model = build_model(max_review_length, max_movie_length)
 
-    print(f"X_train.shape: {X_train.shape}")
-    print(f"Y_train.shape: {y_train.shape}")
+    # Build a simple neural network using TensorFlow's Keras API
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(10, activation='relu', input_shape=(1,)),
+        tf.keras.layers.Dense(1)
+    ])
+
+    # Compile the model
+    model.compile(optimizer='adam', loss='mean_squared_error')
+
     # Train the model
-    model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test))
+    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+    # Make predictions on the test set
+    y_pred = model.predict(X_test)
 
     # Evaluate the model
-    loss, accuracy = model.evaluate(X_test, y_test)
-    print(f"Test Accuracy: {accuracy * 100:.2f}%")
-
+    mse = mean_squared_error(y_test, y_pred)
+    print(f'Mean Squared Error: {mse}')
+        
 if __name__ == "__main__":
     main()
