@@ -104,8 +104,12 @@ def main():
     # Make predictions on the test set
     y_pred = model.predict(X_test)
 
+    # Flatten y_pred and y_test
+    y_pred_flat = y_pred.reshape((y_pred.shape[0], -1))
+    y_test_flat = Y_test.reshape((Y_test.shape[0], -1))
+
     # Evaluate the model
-    mse = mean_squared_error(y_test, y_pred)
+    mse = mean_squared_error(y_test_flat, y_pred_flat)
     print(f'Mean Squared Error: {mse}')
         
 if __name__ == "__main__":
