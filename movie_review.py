@@ -59,7 +59,8 @@ def main():
     max_review_length = max([len(data['review_token']) for data in extracted_data])
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
-    extracted_df = preprocess_df(extracted_data, max_review_length)
+    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+
     token_df = extracted_df[['review_token', 'movie_names_token']][:5]
     # Use tolist() to convert lists to NumPy arrays
     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
