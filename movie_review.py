@@ -58,8 +58,8 @@ def main():
     extracted_df = preprocess_df(extracted_data, max_review_length)
     token_df = extracted_df[['review_token', 'movie_names_token']][:5]
     # Use tolist() to convert lists to NumPy arrays
-    X = np.array(token_df['review_token'].tolist())
-    Y = np.array(token_df['movie_names_token'].tolist())
+    X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
+    Y = np.array([np.array(val) for val in token_df['movie_names_token'].tolist()])
 
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
