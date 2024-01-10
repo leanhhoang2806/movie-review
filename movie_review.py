@@ -65,14 +65,18 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-    print(f"Type of X_train: {type(X_train)}, Type of y_train: {type(y_train)}")
-    print(f"Type of X_test: {type(X_test)}, Type of y_test: {type(y_test)}")
-
-    # Reshape y_train and y_test if needed
-    Y_train = y_train.reshape((y_train.shape[0], y_train.shape[1], 1))
-    Y_test = y_test.reshape((y_test.shape[0], y_test.shape[1], 1))
+    Y_train = np.array([np.array(token_list) for token_list in y_train])
+    Y_test = np.array([np.array(token_list) for token_list in y_test])
 
     # Check the shape of Y_train and Y_test
+    print(f"Shape of Y_train before reshaping: {Y_train.shape}")
+    print(f"Shape of Y_test before reshaping: {Y_test.shape}")
+
+    # Reshape Y_train and Y_test
+    Y_train = Y_train.reshape((Y_train.shape[0], Y_train.shape[1], 1))
+    Y_test = Y_test.reshape((Y_test.shape[0], Y_test.shape[1], 1))
+
+    # Check the shape of Y_train and Y_test after reshaping
     print(f"Shape of Y_train after reshaping: {Y_train.shape}")
     print(f"Shape of Y_test after reshaping: {Y_test.shape}")
 
