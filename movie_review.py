@@ -41,7 +41,7 @@ def build_model(max_review_length, max_movie_length):
     return model
 
 def convert_tokens_to_words(tokenizer, tokens):
-    words = tokenizer.convert_ids_to_tokens(tokens)
+    words = tokenizer.convert_tokens_to_string(tokens)
     return " ".join(words)
 
 def main():
@@ -91,9 +91,9 @@ def main():
 
     # Build a simple neural network using TensorFlow's Keras API
     model = tf.keras.Sequential([
-        tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
-        tf.keras.layers.LSTM(32, return_sequences=True),  # LSTM layer for sequence modeling
-        tf.keras.layers.Dense(max_movie_length, activation='softmax')
+        tf.keras.layers.Dense(10, activation='relu', input_shape=(max_review_length,)),
+        tf.keras.layers.Dense(max_movie_length, activation='softmax'),
+        tf.keras.layers.Reshape((max_movie_length, 1))
     ])
 
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -130,6 +130,6 @@ def main():
 
     print(results_df.head())
 
-
+    
 if __name__ == "__main__":
     main()
