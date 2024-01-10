@@ -26,21 +26,13 @@ def preprocess_df(extracted_data, max_review_length):
     return extracted_df
 
 def build_model(max_review_length, max_movie_length):
-    review_input = tf.keras.layers.Input(shape=(max_review_length,), name='review_token')
-    movie_input = tf.keras.layers.Input(shape=(max_movie_length,), name='movie_names_token')
-
-    review_embedding = tf.keras.layers.Embedding(input_dim=30522, output_dim=16)(review_input)
-    movie_embedding = tf.keras.layers.Embedding(input_dim=30522, output_dim=16)(movie_input)
-
-    lstm_review = tf.keras.layers.LSTM(32)(review_embedding)
-    lstm_movie = tf.keras.layers.LSTM(32)(movie_embedding)
-
-    merged = tf.keras.layers.concatenate([lstm_review, lstm_movie])
-    dense1 = tf.keras.layers.Dense(8, activation='relu')(merged)
-    output = tf.keras.layers.Dense(1, activation='sigmoid')(dense1)
-
-    model = tf.keras.Model(inputs=[review_input, movie_input], outputs=output)
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model = tf.keras.Sequential([
+        tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(max_movie_length, activation='softmax')  # Assuming max_movie_length is the vocabulary size
+    ])
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
 
 def main():
@@ -65,30 +57,17 @@ def main():
     extracted_df = preprocess_df(extracted_data, max_review_length)
     token_df = extracted_df[['review_token', 'movie_names_token']]
 
-    X_train_review, X_train_movie, X_test_review, X_test_movie, y_train, y_test = [], [], [], [], [], []
+    X = np.array(token_df['review_token'].tolist())
+    Y = np.array(token_df['movie_names_token'].tolist())
 
-    for i, row in token_df.iterrows():
-        review_tokens = row['review_token']
-        movie_names_tokens = row['movie_names_token']
-
-        if np.random.rand() < 0.8:  # 80% for training, 20% for testing
-            X_train_review.append(review_tokens)
-            X_train_movie.append(movie_names_tokens)
-            y_train.append(1 if len(movie_names_tokens) > 0 else 0)
-        else:
-            X_test_review.append(review_tokens)
-            X_test_movie.append(movie_names_tokens)
-            y_test.append(1 if len(movie_names_tokens) > 0 else 0)
-
-    X_train_review, X_train_movie, X_test_review, X_test_movie = np.array(X_train_review), np.array(X_train_movie), np.array(X_test_review), np.array(X_test_movie)
-
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
     model = build_model(max_review_length, max_movie_length)
 
     # Train the model
-    model.fit({'review_token': X_train_review, 'movie_names_token': X_train_movie}, np.array(y_train), epochs=10, validation_data=({'review_token': X_test_review, 'movie_names_token': X_test_movie}, np.array(y_test)))
+    model.fit(X_train, y_train, epochs=5, validation_data=(X_test, y_test))
 
     # Evaluate the model
-    loss, accuracy = model.evaluate({'review_token': X_test_review, 'movie_names_token': X_test_movie}, np.array(y_test))
+    loss, accuracy = model.evaluate(X_test, y_test)
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
 if __name__ == "__main__":
