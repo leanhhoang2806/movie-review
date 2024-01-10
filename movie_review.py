@@ -92,7 +92,8 @@ def main():
     ])
 
     # Compile the model
-    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+
 
     # Train the model
     model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test))
