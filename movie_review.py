@@ -80,7 +80,7 @@ def main():
             X_test_movie.append(movie_names_tokens)
             y_test.append(1 if len(movie_names_tokens) > 0 else 0)
 
-    X_train_review, X_train_movie, X_test_review, X_test_movie = np.array(X_train_review), np.array(X_train_movie), np.array(X_test_review), np.array(X_test_movie)
+    X_train_review, X_train_movie, X_test_review, X_test_movie = np.array(X_train_review.tolist()), np.array(X_train_movie.tolist()), np.array(X_test_review.tolist()), np.array(X_test_movie.tolist())
 
     model = build_model(max_review_length, max_movie_length)
 
