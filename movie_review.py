@@ -56,11 +56,11 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
 
     extracted_df = preprocess_df(extracted_data, max_review_length)
-    token_df = extracted_df[['review_token', 'movie_names_token']]
-    print(f"type of token_df['review_token']: {type(token_df['review_token'])}")
-    X = token_df['review_token'].to_numpy()
-    print(f"type of X: {type(X)}")
-    Y = token_df['movie_names_token'].to_numpy()
+    token_df = extracted_df[['review_token', 'movie_names_token']][:5]
+        # Use apply along with np.concatenate to flatten the arrays
+    X = token_df['review_token'].apply(np.concatenate).to_numpy()
+    Y = token_df['movie_names_token'].apply(np.concatenate).to_numpy()
+
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
