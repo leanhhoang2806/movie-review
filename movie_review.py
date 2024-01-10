@@ -31,10 +31,10 @@ def preprocess_df(extracted_data, max_review_length, max_movie_length):
 
 def build_model(max_review_length, max_movie_length):
     model = tf.keras.Sequential([
-        tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
+        tf.keras.layers.Embedding(input_dim=30522, output_dim=8, input_length=max_review_length),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.Dense(max_movie_length * 30522, activation='softmax')  # Adjust the output dimension
+        tf.keras.layers.Dense(16, activation='relu'),
+        tf.keras.layers.Dense(max_movie_length, activation='softmax')
     ])
     model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
     return model
