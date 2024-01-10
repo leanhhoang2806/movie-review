@@ -60,7 +60,13 @@ def main():
     # Use tolist() to convert lists to NumPy arrays
     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
     Y = np.array(token_df['movie_names_token'].tolist())
-    Y = Y.reshape((Y.shape[0], Y.shape[1], 1)) 
+
+    # Check the shape of Y
+    print("Shape of Y before reshaping:", Y.shape)
+
+    # Add a new dimension if the array is 1D
+    if len(Y.shape) == 1:
+        Y = Y.reshape((-1, 1))
 
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
