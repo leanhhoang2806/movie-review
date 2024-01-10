@@ -59,7 +59,7 @@ def main():
     token_df = extracted_df[['review_token', 'movie_names_token']][:5]
     # Use tolist() to convert lists to NumPy arrays
     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
-    Y = np.array(token_df['movie_names_token'].tolist())
+    Y = np.array([np.array(token_list) for token_list in token_df['movie_names_token']])
 
     # Check the shape of Y
     print("Shape of Y before reshaping:", Y.shape)
