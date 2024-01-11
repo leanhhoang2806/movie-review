@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
+from tensorflow import keras
+from tensorflow.keras import layers
 
 # Create a sample pandas DataFrame with nested lists
 data = {'Features': [[1], [2], [3], [4], [5]],
-        'Target_Y': [2, 4, 5, 4, 5]}
+        'Target_Y': [[2], [4], [5], [4], [5]]}
 df = pd.DataFrame(data)
 
 # Convert the nested lists into separate columns
@@ -22,24 +23,38 @@ y = df_processed['Target_Y']
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Initialize and train the linear regression model
-model = LinearRegression()
-model.fit(X_train, y_train)
+# Standardize the input features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-# Make predictions on the test set
-y_pred = model.predict(X_test)
+# Convert the nested list target to a numpy array
+y_train_np = np.array(y_train.tolist())
+y_test_np = np.array(y_test.tolist())
 
-# Evaluate the model
-mse = mean_squared_error(y_test, y_pred)
-print(f'Mean Squared Error: {mse}')
+# Build a simple neural network model
+model = keras.Sequential([
+    layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+    layers.Dense(1)  # Output layer with 1 neuron for regression
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train_scaled, y_train_np, epochs=50, batch_size=2, validation_data=(X_test_scaled, y_test_np))
 
 # Now, you can use the trained model to predict a new row with nested list input
 new_data = {'Feature_X': [[6]]}  # Nested list for the new row
 new_row = pd.DataFrame(new_data)
 
+# Standardize the new row features
+new_row_scaled = scaler.transform(new_row)
+
 # Make predictions on the new row
-prediction = model.predict(new_row['Feature_X'].apply(lambda x: np.array(x).reshape(1, -1)))
-print(f'Predicted Target_Y for the new row: {prediction[0]}')
+prediction = model.predict(new_row_scaled)
+print(f'Predicted Target_Y for the new row: {prediction[0][0]}')
+
 
 
 
