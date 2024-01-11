@@ -123,9 +123,11 @@ def main():
         data = preprocess_review_data(review, tokenizer, movie_name_pattern)
         if data:
             extracted_data.append(data)
+    
+    print(data.head())
 
-    max_review_length = len(data['review_token'])
-    max_movie_length = len(data['movie_names_token']) 
+    max_review_length = max([ len(i) for i in pd.Series(data['review_token'])])
+    max_movie_length = max([ len(i) for i in pd.Series(data['movie_names_token'])])
     print(f"max_review length: {max_review_length}, max_movie_length: {max_movie_length}")
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
