@@ -1,16 +1,23 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-# Create a sample pandas DataFrame
-data = {'Feature_X': [1, 2, 3, 4, 5],
+# Create a sample pandas DataFrame with nested lists
+data = {'Features': [[1], [2], [3], [4], [5]],
         'Target_Y': [2, 4, 5, 4, 5]}
 df = pd.DataFrame(data)
 
+# Convert the nested lists into separate columns
+df_expanded = pd.DataFrame(df['Features'].to_list(), columns=['Feature_X'])
+
+# Concatenate the expanded features with the target column
+df_processed = pd.concat([df_expanded, df['Target_Y']], axis=1)
+
 # Split the data into features (X) and target (y)
-X = df[['Feature_X']]
-y = df['Target_Y']
+X = df_processed[['Feature_X']]
+y = df_processed['Target_Y']
 
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -26,13 +33,14 @@ y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 print(f'Mean Squared Error: {mse}')
 
-# Now, you can use the trained model to predict a new row
-new_data = {'Feature_X': [6]}  # Replace this with the features of the new row
+# Now, you can use the trained model to predict a new row with nested list input
+new_data = {'Feature_X': [[6]]}  # Nested list for the new row
 new_row = pd.DataFrame(new_data)
 
 # Make predictions on the new row
-prediction = model.predict(new_row)
+prediction = model.predict(new_row['Feature_X'].apply(lambda x: np.array(x).reshape(1, -1)))
 print(f'Predicted Target_Y for the new row: {prediction[0]}')
+
 
 
 
@@ -102,64 +110,69 @@ print(f'Predicted Target_Y for the new row: {prediction[0]}')
 #     max_movie_length = len(data['movie_names_token']) 
 
 #     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-
-#     token_df = extracted_df[['review_token', 'movie_names_token']][:5]
-#     # Use tolist() to convert lists to NumPy arrays
-#     X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
-#     Y = np.array([np.array(token_list) for token_list in token_df['movie_names_token']])
-
-
+#     token_df  = extracted_df[['review_token', 'movie_names_token']]
+#     X = token_df[['review_token']]
+#     Y = token_df['movie_names_token']
 
 #     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-#     Y_train = np.array([np.array(token_list) for token_list in y_train])
-#     Y_test = np.array([np.array(token_list) for token_list in y_test])
-
-#     model = tf.keras.Sequential([
-#         tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
-#         tf.keras.layers.Flatten(),
-#         tf.keras.layers.Dense(32, activation='relu'),
-#         tf.keras.layers.Dense(max_movie_length * 30522, activation='softmax'),  # Assuming max_movie_length is the vocabulary size
-#         tf.keras.layers.Reshape((max_movie_length, 30522))
-#     ])
-
-
-#     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    # token_df = extracted_df[['review_token', 'movie_names_token']][:5]
+    # # Use tolist() to convert lists to NumPy arrays
+    # X = np.array([np.array(val) for val in token_df['review_token'].tolist()])
+    # Y = np.array([np.array(token_list) for token_list in token_df['movie_names_token']])
 
 
 
+    # X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+    # Y_train = np.array([np.array(token_list) for token_list in y_train])
+    # Y_test = np.array([np.array(token_list) for token_list in y_test])
+
+    # model = tf.keras.Sequential([
+    #     tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
+    #     tf.keras.layers.Flatten(),
+    #     tf.keras.layers.Dense(32, activation='relu'),
+    #     tf.keras.layers.Dense(max_movie_length * 30522, activation='softmax'),  # Assuming max_movie_length is the vocabulary size
+    #     tf.keras.layers.Reshape((max_movie_length, 30522))
+    # ])
+
+
+    # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 
-#     # Train the model
-#     model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test))
 
 
-#     # Make predictions on the test set
-#     y_pred = model.predict(X_test)
 
-#     # Flatten y_pred and y_test
-#     y_pred_flat = y_pred.reshape((y_pred.shape[0], -1))
-#     y_test_flat = Y_test.reshape((Y_test.shape[0], -1))
+    # # Train the model
+    # model.fit(X_train, Y_train, epochs=50, batch_size=32, validation_data=(X_test, Y_test))
 
-#     # Evaluate the model
-#     mse = mean_squared_error(y_test_flat, y_pred_flat)
-#     print(f'Mean Squared Error: {mse}')
 
-#     # Create a new DataFrame to store the results
-#     results_df = pd.DataFrame(columns=['Original Review', 'Predicted Movie Names'])
+    # # Make predictions on the test set
+    # y_pred = model.predict(X_test)
 
-#     # Iterate through each test example
-#     for i in range(len(X_test)):
-#         original_review = imdb_df['review'].iloc[X_test[i].tolist()]
-#         predicted_movie_names_tokens = y_pred[i].argmax(axis=1)
-#         predicted_movie_names = convert_tokens_to_words(tokenizer, predicted_movie_names_tokens)
+    # # Flatten y_pred and y_test
+    # y_pred_flat = y_pred.reshape((y_pred.shape[0], -1))
+    # y_test_flat = Y_test.reshape((Y_test.shape[0], -1))
 
-#         # Append results to the DataFrame
-#         results_df = results_df.append({'Original Review': original_review, 'Predicted Movie Names': predicted_movie_names}, ignore_index=True)
+    # # Evaluate the model
+    # mse = mean_squared_error(y_test_flat, y_pred_flat)
+    # print(f'Mean Squared Error: {mse}')
 
-#     print(results_df.head())
+    # # Create a new DataFrame to store the results
+    # results_df = pd.DataFrame(columns=['Original Review', 'Predicted Movie Names'])
+
+    # # Iterate through each test example
+    # for i in range(len(X_test)):
+    #     original_review = imdb_df['review'].iloc[X_test[i].tolist()]
+    #     predicted_movie_names_tokens = y_pred[i].argmax(axis=1)
+    #     predicted_movie_names = convert_tokens_to_words(tokenizer, predicted_movie_names_tokens)
+
+    #     # Append results to the DataFrame
+    #     results_df = results_df.append({'Original Review': original_review, 'Predicted Movie Names': predicted_movie_names}, ignore_index=True)
+
+    # print(results_df.head())
 
     
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
