@@ -42,7 +42,7 @@ def main():
     print(f"extracted df shape {extracted_df['review_token'].shape}")
     print(f"extracted df shape {extracted_df['movie_names_token'].shape}")
     print(f"extract df review token data type {type(extracted_df['review_token'])}")
-    print(f"extracted df review_token data type {type(tf.constant(extracted_df['review_token'].values))}")
+    print(f"extracted df review_token data type {type(tf.constant(extracted_df['review_token'].tolist()))}")
 
     # Input data
     X = [[1, 2, 1], [2, 1, 2], [3, 5, 1]]
