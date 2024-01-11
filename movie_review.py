@@ -126,6 +126,7 @@ def main():
 
     max_review_length = len(data['review_token'])
     max_movie_length = len(data['movie_names_token']) 
+    print(f"max_review length: {max_review_length}, max_movie_length: {max_movie_length}")
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     review_token_series = pd.Series(extracted_df['review_token'])
@@ -133,6 +134,7 @@ def main():
     for i in review_token_series:
         all_length.add(len(i))
     print(f"length of items in  review token: {all_length}")
+
 
 
     token_df  = extracted_df[['review_token', 'movie_names_token']]
@@ -143,6 +145,7 @@ def main():
 
     y_train_np = np.array(y_train.tolist())
     y_test_np = np.array(y_test.to_list())
+    print(f"y_train_np_shape: {y_train_np.shape}")
 
     model = keras.Sequential([
         layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
