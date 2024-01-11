@@ -122,6 +122,8 @@ def main():
     imdb_df = load_imdb_dataset(csv_file_path)
     movie_name_pattern = re.compile(r'"([^"]+)"')
 
+    imdb_df = imdb_df[:10]
+
     extracted_data = []
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
