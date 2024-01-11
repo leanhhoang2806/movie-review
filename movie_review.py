@@ -123,6 +123,7 @@ def main():
     movie_name_pattern = re.compile(r'"([^"]+)"')
 
     imdb_df = imdb_df[:10]
+    print(imdb_df.head())
 
     extracted_data = []
 
