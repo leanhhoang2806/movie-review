@@ -106,11 +106,10 @@ def main():
     # Build the model
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(32, activation='relu', input_shape=(1,)),
-        tf.keras.layers.Dense(1)  # Output layer with 1 neuron for regression task
+        tf.keras.layers.Dense(1, activation='linear')  # Linear activation for regression
     ])
 
-    # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mse']) 
 
     # Print the model summary
     model.summary()
@@ -125,7 +124,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-    
-if __name__ == "__main__":
-    main()
