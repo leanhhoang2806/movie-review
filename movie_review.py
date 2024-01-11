@@ -96,6 +96,7 @@ def main():
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df[['movie_names_token']]
+    print(f"X is type of : {type(X)}, Y is type of : {type(Y)}")
     # Assuming 'review_token' is a list within each item of 'X'
     X = np.array([item[0] for item in extracted_df['review_token']], dtype=np.float32)
 
