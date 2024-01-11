@@ -4,43 +4,43 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 
-def main():
-    # Create a sample pandas DataFrame with nested lists
-    data = {'Features': [[1], [2], [3], [4], [5]],
-            'Target_Y': [2, 4, 5, 4, 5]}
-    df = pd.DataFrame(data)
+# Create a sample pandas DataFrame with nested lists
+data = {'Features': [[1], [2], [3], [4], [5]],
+        'Target_Y': [2, 4, 5, 4, 5]}
+df = pd.DataFrame(data)
 
-    # Convert the nested lists into separate columns
-    df_expanded = pd.DataFrame(df['Features'].to_list(), columns=['Feature_X'])
+# Convert the nested lists into separate columns
+df_expanded = pd.DataFrame(df['Features'].to_list(), columns=['Feature_X'])
 
-    # Concatenate the expanded features with the target column
-    df_processed = pd.concat([df_expanded, df['Target_Y']], axis=1)
+# Concatenate the expanded features with the target column
+df_processed = pd.concat([df_expanded, df['Target_Y']], axis=1)
 
-    # Split the data into features (X) and target (y)
-    X = df_processed[['Feature_X']]
-    y = df_processed['Target_Y']
+# Split the data into features (X) and target (y)
+X = df_processed[['Feature_X']]
+y = df_processed['Target_Y']
 
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    # Initialize and train the linear regression model
-    model = LinearRegression()
-    model.fit(X_train, y_train)
+# Initialize and train the linear regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
 
-    # Make predictions on the test set
-    y_pred = model.predict(X_test)
+# Make predictions on the test set
+y_pred = model.predict(X_test)
 
-    # Evaluate the model
-    mse = mean_squared_error(y_test, y_pred)
-    print(f'Mean Squared Error: {mse}')
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+print(f'Mean Squared Error: {mse}')
 
-    # Now, you can use the trained model to predict a new row with nested list input
-    new_data = {'Feature_X': [[6]]}  # Nested list for the new row
-    new_row = pd.DataFrame(new_data)
+# Now, you can use the trained model to predict a new row with nested list input
+new_data = {'Feature_X': [[6]]}  # Nested list for the new row
+new_row = pd.DataFrame(new_data)
 
-    # Make predictions on the new row
-    prediction = model.predict(np.array(new_row['Feature_X'].tolist()).reshape(-1, 1))
-    print(f'Predicted Target_Y for the new row: {prediction[0]}')
+# Make predictions on the new row
+prediction = model.predict(new_row['Feature_X'].apply(lambda x: np.array(x).reshape(1, -1)))
+print(f'Predicted Target_Y for the new row: {prediction[0]}')
+
 
 
 
@@ -176,5 +176,5 @@ def main():
     # print(results_df.head())
 
     
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
