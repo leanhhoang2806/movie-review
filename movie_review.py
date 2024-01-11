@@ -48,6 +48,11 @@ def main():
     Y = np.array([item[0] for item in extracted_df['movie_names_token']], dtype=np.int32)
 
 
+    print(f"X input: {X.iloc[0]}")
+    print(f"Y input: {Y.iloc[0]}")
+    print(f"X is type of : {type(X)}, Y is type of : {type(Y)}")
+
+
     # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
     X_train_sequences = X_train['review_token'].tolist()
