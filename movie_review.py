@@ -95,7 +95,7 @@ def main():
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
-    Y = extracted_df['movie_names_token']
+    Y = extracted_df[['movie_names_token']]
     print(f"X shape: {X.shape} and Y shape: {Y.shape}")
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
