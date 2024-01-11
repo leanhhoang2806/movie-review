@@ -110,8 +110,8 @@ def main():
 
     # Build the model
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(32, activation='relu', input_shape=(1,)),
-        tf.keras.layers.Dense(1, activation='linear')  # Linear activation for regression
+        tf.keras.layers.Dense(32, activation='relu', input_shape=(X_train.shape[1],)),
+        tf.keras.layers.Dense(y_train.shape[1], activation='linear')  # Linear activation for regression
     ])
 
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mse']) 
