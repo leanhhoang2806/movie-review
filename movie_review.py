@@ -96,8 +96,12 @@ def main():
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df[['movie_names_token']]
-    X = X.astype(np.float32)
-    Y = Y.astype(np.int32)
+    # Assuming 'review_token' is a list within each item of 'X'
+    X = np.array([item[0] for item in extracted_df['review_token']], dtype=np.float32)
+
+    # Assuming 'movie_names_token' is a list within each item of 'Y'
+    Y = np.array([item[0] for item in extracted_df['movie_names_token']], dtype=np.int32)
+
     print(f"X shape: {X.shape} and Y shape: {Y.shape}")
 
     # Split the data into training and testing sets
