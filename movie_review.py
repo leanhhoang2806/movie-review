@@ -98,17 +98,27 @@ def main():
     Y = extracted_df[['movie_names_token']]
     print(f"X shape: {X.shape} and Y shape: {Y.shape}")
 
+    # Split the data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-
-    # # Build a simple neural network model
-    model = keras.Sequential([
-        layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
-        layers.Dense(y_train.shape[1])  # Output layer with 1 neuron for regression
+    # Build the model
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(32, activation='relu', input_shape=(1,)),
+        tf.keras.layers.Dense(1)  # Output layer with 1 neuron for regression task
     ])
 
+    # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X_train, y_train, epochs=50, batch_size=2, validation_data=(X_test, y_train))
+
+    # Print the model summary
+    model.summary()
+
+    # Train the model
+    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+
+    # Evaluate the model
+    mse = model.evaluate(X_test, y_test)
+    print(f'Mean Squared Error on Test Set: {mse}')
     
 if __name__ == "__main__":
     main()
