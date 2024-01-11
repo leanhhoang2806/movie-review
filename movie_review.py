@@ -40,8 +40,8 @@ def main():
     X = tf.constant(extracted_df['review_token'].tolist())
     Y = tf.constant(extracted_df['movie_names_token'].tolist())
 
-    print(f"X.shape: {extracted_df['review_token'].shape}")
-    print(f"Y.shape: {extracted_df['movie_names_token'].shape}")
+    print(f"X.shape: {len(extracted_df['review_token'].tolist()[0])}")
+    print(f"Y.shape: {len(extracted_df['movie_names_token'].tolist()[0])}")
     # Define the neural network model
     model = keras.Sequential([
         layers.Dense(units=64, activation='relu', input_shape=(3,)),
