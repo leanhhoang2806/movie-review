@@ -37,22 +37,11 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     # Split the data into features (X) and target (y)
-    X = extracted_df[['review_token']]
-    Y = extracted_df[['movie_names_token']]
-    print(f"extracted df shape {extracted_df['review_token'].shape}")
-    print(f"extracted df shape {extracted_df['movie_names_token'].shape}")
-    print(f"extract df review token data type {type(extracted_df['review_token'])}")
-    print(f"extracted df review_token data type {type(tf.constant(extracted_df['review_token'].tolist()))}")
+    X = tf.constant(extracted_df['review_token'].tolist())
+    Y = tf.constant(extracted_df['movie_names_token'].tolist())
 
-    # Input data
-    X = [[1, 2, 1], [2, 1, 2], [3, 5, 1]]
-    Y = [[2, 0], [2, 1], [5, 4]]
-
-    # Convert to NumPy arrays
-    X = tf.convert_to_tensor(X, dtype=tf.float32)
-    Y = tf.convert_to_tensor(Y, dtype=tf.float32)
-    print(f"X data type: {type(X)}")
-
+    print(f"X.shape: {extracted_df['review_token'].shape}")
+    print(f"Y.shape: {extracted_df['movie_names_token'].shape}")
     # Define the neural network model
     model = keras.Sequential([
         layers.Dense(units=64, activation='relu', input_shape=(3,)),
