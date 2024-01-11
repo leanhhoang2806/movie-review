@@ -91,9 +91,8 @@ def main():
 
     max_review_length = max([len(data['review_token']) for data in extracted_data])
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
-
+    print(f"max review length pad token: {max_review_length}, max movie name token: {max_movie_length}")
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-    print(extracted_df.head())
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df['movie_names_token']
