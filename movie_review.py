@@ -9,6 +9,8 @@ from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
 from models.model_builder import MultiHeadAttention
 import os
+from tensorflow import keras
+from tensorflow.keras import layers
 
 def main():
     tf.keras.backend.clear_session()
@@ -33,46 +35,35 @@ def main():
 
     max_review_length = max([len(data['review_token']) for data in extracted_data])
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
-    print(f"max review length pad token: {max_review_length}, max movie name token: {max_movie_length}")
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df[['movie_names_token']]
-    print(f"X input: {X.iloc[0]}")
-    print(f"Y input: {Y.iloc[0]}")
-    print(f"X is type of : {type(X)}, Y is type of : {type(Y)}")
-    # Assuming 'review_token' is a list within each item of 'X'
-    X = np.array([item[0] for item in extracted_df['review_token']], dtype=np.float32)
 
-    # Assuming 'movie_names_token' is a list within each item of 'Y'
-    Y = np.array([item[0] for item in extracted_df['movie_names_token']], dtype=np.int32)
+    # Input data
+    X = [[1, 2, 1], [2, 1, 2], [3, 5, 1]]
+    Y = [[2, 0], [2, 1], [5, 4]]
 
+    # Convert to NumPy arrays
+    X = tf.convert_to_tensor(X, dtype=tf.float32)
+    Y = tf.convert_to_tensor(Y, dtype=tf.float32)
 
-    print(f"X input: {X.iloc[0]}")
-    print(f"Y input: {Y.iloc[0]}")
-    print(f"X is type of : {type(X)}, Y is type of : {type(Y)}")
-
-
-    # Split the data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-    X_train_sequences = X_train['review_token'].tolist()
-    Y_train_sequences = y_train['movie_names_token'].tolist()
-    X_test_sequences = X_test['review_token'].tolist()
-    Y_test_sequences = y_test['movie_names_token'].tolist()
-
-    # Build the model
-    model = tf.keras.Sequential([
-        tf.keras.layers.Dense(32, activation='relu', input_shape=(max_review_length,)),
-        tf.keras.layers.Dense(1)  # Output layer with 1 neuron for regression task
+    # Define the neural network model
+    model = keras.Sequential([
+        layers.Dense(units=64, activation='relu', input_shape=(3,)),
+        layers.Dense(units=2)  # Output layer with 2 units for the target values
     ])
-    model.compile(optimizer='adam', loss='mean_squared_error')
+
+    # Compile the model
+    model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
     # Train the model
-    model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y_test))
+    model.fit(X, Y, epochs=1000, verbose=1)
 
-    # Evaluate the model
-    mse = model.evaluate(X_test, y_test)
-    print(f'Mean Squared Error on Test Set: {mse}')
+    # Make predictions
+    predictions = model.predict(X)
+
+
     
 if __name__ == "__main__":
     main()
