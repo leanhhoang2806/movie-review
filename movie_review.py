@@ -123,39 +123,39 @@ def main():
         data = preprocess_review_data(review, tokenizer, movie_name_pattern)
         if data:
             extracted_data.append(data)
-    
-    print(data.head())
+    extracted_df = pd.DataFrame(extracted_data)
+    print(extracted_df.head())
 
-    max_review_length = max([ len(i) for i in pd.Series(data['review_token'])])
-    max_movie_length = max([ len(i) for i in pd.Series(data['movie_names_token'])])
+    max_review_length = max([ len(i) for i in pd.Series(extracted_df['review_token'])])
+    max_movie_length = max([ len(i) for i in pd.Series(extracted_df['movie_names_token'])])
     print(f"max_review length: {max_review_length}, max_movie_length: {max_movie_length}")
 
-    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-    review_token_series = pd.Series(extracted_df['review_token'])
-    all_length = set()
-    for i in review_token_series:
-        all_length.add(len(i))
-    print(f"length of items in  review token: {all_length}")
+    # extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    # review_token_series = pd.Series(extracted_df['review_token'])
+    # all_length = set()
+    # for i in review_token_series:
+    #     all_length.add(len(i))
+    # print(f"length of items in  review token: {all_length}")
 
 
 
-    token_df  = extracted_df[['review_token', 'movie_names_token']]
-    X = token_df[['review_token']]
-    Y = token_df['movie_names_token']
+    # token_df  = extracted_df[['review_token', 'movie_names_token']]
+    # X = token_df[['review_token']]
+    # Y = token_df['movie_names_token']
 
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+    # X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-    y_train_np = np.array(y_train.tolist())
-    y_test_np = np.array(y_test.to_list())
-    print(f"y_train_np_shape: {y_train_np.shape}")
+    # y_train_np = np.array(y_train.tolist())
+    # y_test_np = np.array(y_test.to_list())
+    # print(f"y_train_np_shape: {y_train_np.shape}")
 
-    model = keras.Sequential([
-        layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
-        layers.Dense(y_train_np.shape[1])  # Output layer with the shape of y_train data
-    ])
+    # model = keras.Sequential([
+    #     layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+    #     layers.Dense(y_train_np.shape[1])  # Output layer with the shape of y_train data
+    # ])
 
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(X_train, y_train_np, epochs=50, batch_size=32, validation_data=(X_test, y_test_np))
+    # model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    # model.fit(X_train, y_train_np, epochs=50, batch_size=32, validation_data=(X_test, y_test_np))
 
     # token_df = extracted_df[['review_token', 'movie_names_token']][:5]
     # # Use tolist() to convert lists to NumPy arrays
