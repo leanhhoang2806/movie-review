@@ -39,13 +39,15 @@ def main():
     # Split the data into features (X) and target (y)
     X = tf.constant(extracted_df['review_token'].tolist())
     Y = tf.constant(extracted_df['movie_names_token'].tolist())
+    input_shape = len(extracted_df['review_token'].tolist()[0])
+    output_shape = len(extracted_df['movie_names_token'].tolist()[0])
 
     print(f"X.shape: {len(extracted_df['review_token'].tolist()[0])}")
     print(f"Y.shape: {len(extracted_df['movie_names_token'].tolist()[0])}")
     # Define the neural network model
     model = keras.Sequential([
-        layers.Dense(units=64, activation='relu', input_shape=(3,)),
-        layers.Dense(units=2)  # Output layer with 2 units for the target values
+        layers.Dense(units=64, activation='relu', input_shape=(input_shape,)),
+        layers.Dense(units=output_shape)  # Output layer with 2 units for the target values
     ])
 
     # Compile the model
