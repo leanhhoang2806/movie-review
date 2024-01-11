@@ -38,8 +38,9 @@ new_data = {'Feature_X': [[6]]}  # Nested list for the new row
 new_row = pd.DataFrame(new_data)
 
 # Make predictions on the new row
-prediction = model.predict(new_row['Feature_X'].apply(lambda x: np.array(x).reshape(1, -1)))
+prediction = model.predict(np.array(new_row['Feature_X'].tolist()).reshape(-1, 1))
 print(f'Predicted Target_Y for the new row: {prediction[0]}')
+
 
 
 
