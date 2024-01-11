@@ -77,12 +77,14 @@ def main():
     Y_train = np.array([np.array(token_list) for token_list in y_train])
     Y_test = np.array([np.array(token_list) for token_list in y_test])
 
-    # Build a simple neural network using TensorFlow's Keras API
     model = tf.keras.Sequential([
-        tf.keras.layers.Dense(10, activation='relu', input_shape=(max_review_length, max_movie_length)),
-        tf.keras.layers.Reshape((max_movie_length,)),
-        tf.keras.layers.Dense(max_movie_length, activation='softmax')
+        tf.keras.layers.Embedding(input_dim=30522, output_dim=16, input_length=max_review_length),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(max_movie_length * 30522, activation='softmax'),  # Assuming max_movie_length is the vocabulary size
+        tf.keras.layers.Reshape((max_movie_length, 30522))
     ])
+
 
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
