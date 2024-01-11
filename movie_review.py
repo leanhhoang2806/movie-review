@@ -48,12 +48,13 @@ model.fit(X_train_scaled, y_train_np, epochs=50, batch_size=2, validation_data=(
 new_data = {'Feature_X': [[6]]}  # Nested list for the new row
 new_row = pd.DataFrame(new_data)
 
-# Standardize the new row features
-new_row_scaled = scaler.transform(new_row)
+# Convert the nested list to a NumPy array
+new_row_np = np.array(new_row['Feature_X'].tolist())
 
 # Make predictions on the new row
-prediction = model.predict(new_row_scaled)
+prediction = model.predict(new_row_np)
 print(f'Predicted Target_Y for the new row: {prediction[0][0]}')
+
 
 
 
