@@ -124,8 +124,8 @@ def main():
         if data:
             extracted_data.append(data)
 
-    max_review_length = len(data['review_token'])
-    max_movie_length = len(data['movie_names_token']) 
+    max_review_length = len(data['review_token'].iloc[0])
+    max_movie_length = len(data['movie_names_token'].iloc[0]) 
 
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     token_df  = extracted_df[['review_token', 'movie_names_token']]
