@@ -100,21 +100,15 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
 
-    X_train = np.array([np.array(val) for val in X_train]) 
-    X_test = np.array([np.array(val) for val in X_test]) 
-
-    # Convert the nested list target to a numpy array
-    y_train_np = np.array(y_train.tolist())
-    y_test_np = np.array(y_test.tolist())
 
     # # Build a simple neural network model
     model = keras.Sequential([
         layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
-        layers.Dense(y_train_np.shape[1])  # Output layer with 1 neuron for regression
+        layers.Dense(y_train.shape[1])  # Output layer with 1 neuron for regression
     ])
 
     model.compile(optimizer='adam', loss='mean_squared_error')
-    model.fit(X_train, y_train_np, epochs=50, batch_size=2, validation_data=(X_test, y_test_np))
+    model.fit(X_train, y_train, epochs=50, batch_size=2, validation_data=(X_test, y_train))
     
 if __name__ == "__main__":
     main()
