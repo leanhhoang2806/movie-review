@@ -123,7 +123,6 @@ def main():
     movie_name_pattern = re.compile(r'"([^"]+)"')
 
     imdb_df = imdb_df[:10]
-    print(imdb_df.head())
 
     extracted_data = []
 
@@ -154,12 +153,12 @@ def main():
 
     extracted_df = pd.DataFrame(extracted_data)
     print(extracted_df.head())
-    print(extracted_df['review'].iloc[0])
-    print(extracted_df['movie_names'].iloc[0])
+    # print(extracted_df['review'].iloc[0])
+    # print(extracted_df['movie_names'].iloc[0])
 
-    max_review_length = max([ len(i) for i in pd.Series(extracted_df['review_token'])])
-    max_movie_length = max([ len(i) for i in pd.Series(extracted_df['movie_names_token'])])
-    print(f"max_review length: {max_review_length}, max_movie_length: {max_movie_length}")
+    # max_review_length = max([ len(i) for i in pd.Series(extracted_df['review_token'])])
+    # max_movie_length = max([ len(i) for i in pd.Series(extracted_df['movie_names_token'])])
+    # print(f"max_review length: {max_review_length}, max_movie_length: {max_movie_length}")
 
     # extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     # review_token_series = pd.Series(extracted_df['review_token'])
