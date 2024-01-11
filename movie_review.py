@@ -39,6 +39,9 @@ def main():
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df[['movie_names_token']]
+    print(f"extracted df shape {extracted_df['review_token'].shape}")
+    print(f"extracted df shape {extracted_df['movie_names_token'].shape}")
+    print(f"extracted df review_token data type {extracted_df['review_token']}")
 
     # Input data
     X = [[1, 2, 1], [2, 1, 2], [3, 5, 1]]
@@ -47,6 +50,7 @@ def main():
     # Convert to NumPy arrays
     X = tf.convert_to_tensor(X, dtype=tf.float32)
     Y = tf.convert_to_tensor(Y, dtype=tf.float32)
+    print(f"X data type: {type(X)}")
 
     # Define the neural network model
     model = keras.Sequential([
@@ -58,7 +62,7 @@ def main():
     model.compile(optimizer='adam', loss='mse', metrics=['mae'])
 
     # Train the model
-    model.fit(X, Y, epochs=1000, verbose=1)
+    model.fit(X, Y, epochs=1, verbose=1)
 
     # Make predictions
     predictions = model.predict(X)
