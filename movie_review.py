@@ -96,8 +96,12 @@ def main():
     # Split the data into features (X) and target (y)
     X = extracted_df[['review_token']]
     Y = extracted_df['movie_names_token']
+    print(f"X shape: {X.shape} and Y shape: {Y.shape}")
 
     X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+    X_train = np.array([np.array(val) for val in X_train]) 
+    X_test = np.array([np.array(val) for val in X_test]) 
 
     # Convert the nested list target to a numpy array
     y_train_np = np.array(y_train.tolist())
