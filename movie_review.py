@@ -127,8 +127,8 @@ def main():
     # Convert predictions back to words using the tokenizer
     decoded_predictions = []
 
-    for pred in predictions.numpy():
-        decoded_sequence = [tokenizer.decode(int(token_id)) for token_id in pred]
+    for pred_sequence in predictions.numpy():
+        decoded_sequence = [tokenizer.decode(int(token_id)) for token_id in pred_sequence[0]]
         decoded_predictions.append(decoded_sequence)
     
     # Add the decoded predictions to the dataframe
