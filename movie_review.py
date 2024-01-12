@@ -52,7 +52,7 @@ def main():
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 
     # Train the model
-    model.fit(X, Y, epochs=1, verbose=1)
+    model.fit(X, Y, epochs=1000, verbose=1)
 
     predictions = model.predict(X)
     decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
