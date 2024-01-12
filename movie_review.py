@@ -124,18 +124,9 @@ def main():
 
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
-    # Convert predictions back to words using the tokenizer
-    decoded_predictions = []
+    
 
-    for pred_sequence in predictions.numpy():
-        decoded_sequence = [tokenizer.decode(int(token_id)) for token_id in pred_sequence[0]]
-        decoded_predictions.append(decoded_sequence)
-    
-    # Add the decoded predictions to the dataframe
-    imdb_df['predicted_movie_names'] = decoded_predictions
-    
-    # Print the dataframe with original review and predicted result
-    print(imdb_df[['review', 'predicted_movie_names']])
+    print(predictions[0])
 
     
 if __name__ == "__main__":
