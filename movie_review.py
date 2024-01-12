@@ -112,6 +112,7 @@ def main():
     # Split the data into features (X) and target (y)
     X = tf.constant(extracted_df['review_token'].tolist())
     Y = tf.constant(extracted_df['movie_names_token'].tolist())
+    print(f"X.shape : {X.shape}, and Y.shap: {Y.shape}")
 
 
     # Instantiate the model
