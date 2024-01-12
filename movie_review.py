@@ -125,8 +125,7 @@ def main():
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
 
-    print(predictions.numpy().tolist())
-    print(predictions[0])
+    print(predictions.numpy().tolist()[0])
 
     # word_list = [tokenizer.decode(int(val)) for val in predictions[0].numpy()]
 
