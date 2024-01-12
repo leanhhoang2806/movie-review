@@ -127,8 +127,11 @@ def main():
 
     words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten() if float(val).is_integer()]
 
+    word_list = [ ''.join(item) for item in words_list]
+    human_readable = ' '.join(word_list)
 
-    print(words_list)
+
+    print(human_readable)
     
 
     
