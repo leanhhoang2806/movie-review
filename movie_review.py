@@ -34,7 +34,7 @@ def main():
     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     
-    test_review_token = extracted_df['review'].iloc[0]
+    test_review_token = extracted_df['review_token'].iloc[0]
     expected_result = extracted_df['movie_names'].iloc[0]
 
     # Split the data into features (X) and target (y)
