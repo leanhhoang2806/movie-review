@@ -120,19 +120,19 @@ def main():
     model.compile(optimizer='adam', loss='mean_squared_error')
 
     # Train the model
-    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=100, verbose=1)
+    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
 
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
-    print(predictions)
+    print(predictions.shape)
 
-    words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten() if float(val).is_integer()]
+    # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten() if float(val).is_integer()]
 
-    word_list = [ ''.join(item) for item in words_list]
-    human_readable = ' '.join(word_list)
+    # word_list = [ ''.join(item) for item in words_list]
+    # human_readable = ' '.join(word_list)
 
 
-    print(human_readable)
+    # print(human_readable)
     
 
     
