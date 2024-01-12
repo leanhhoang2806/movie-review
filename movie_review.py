@@ -55,9 +55,10 @@ def main():
     model.fit(X, Y, epochs=1, verbose=1)
 
     # Make predictions
-    predictions = model.predict(test_review_token)
-    decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
-    print(f"Given a review {test_review_token},  \n the movie name prediction is {decoded_predictions}, \n the actual movie name is  ")
+    print(f"test_review_token: {test_review_token}")
+    # predictions = model.predict(test_review_token)
+    # decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
+    # print(f"Given a review {test_review_token},  \n the movie name prediction is {decoded_predictions}, \n the actual movie name is  ")
 
 
     
