@@ -54,10 +54,9 @@ def main():
     # Train the model
     model.fit(X, Y, epochs=1, verbose=1)
 
-    print(f"Extracted data : {extracted_data[0]}")
     predictions = model.predict(X)
     decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
-    print(f"the movie name prediction is {decoded_predictions}, \n the actual movie name is  ")
+    print(f"the movie name prediction is {decoded_predictions}, \n the actual review is  {extracted_data[0]['review']} ")
 
 
     
