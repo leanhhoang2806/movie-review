@@ -1,16 +1,17 @@
-# import re
-# import pandas as pd
-# import numpy as np
-# from sklearn.model_selection import train_test_split
-# from transformers import BertTokenizer
-# import tensorflow as tf
-# from data_loader.load_imdb import load_imdb_dataset
-# from processors.tokenizer import preprocess_review_data, preprocess_df
-# from training_strategy.distributed_training import grid_search
-# from tensorflow.keras.layers import LSTM, MultiHeadAttention
-# import os
-# from tensorflow import keras
-# from tensorflow.keras import layers
+import re
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from transformers import BertTokenizer
+import tensorflow as tf
+from data_loader.load_imdb import load_imdb_dataset
+from processors.tokenizer import preprocess_review_data, preprocess_df
+from training_strategy.distributed_training import grid_search
+from tensorflow.keras.layers import LSTM, MultiHeadAttention
+import os
+from tensorflow import keras
+from tensorflow.keras import layers
+
 
 # def main():
 #     tf.keras.backend.clear_session()
@@ -40,6 +41,13 @@
 #     Y = tf.constant(extracted_df['movie_names_token'].tolist())
 #     input_shape = len(extracted_df['review_token'].tolist()[0])
 #     output_shape = len(extracted_df['movie_names_token'].tolist()[0])
+
+#     num_heads = 2
+#     d_model = 4
+
+#     inputs = {'query': X, 'key': X, 'value': X}
+#     attention_layer = MultiHeadAttention(d_model, num_heads)
+#     output = attention_layer(inputs)
 
 #     # Define the neural network model
 #     model = keras.Sequential([
@@ -128,16 +136,35 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         return output
 
-# Create the model
-num_heads = 2
-d_model = 4
+# Define the model
+class MyModel(tf.keras.Model):
+    def __init__(self, d_model, num_heads):
+        super(MyModel, self).__init__()
+        self.attention = MultiHeadAttention(d_model, num_heads)
+        self.ffn = tf.keras.Sequential([
+            Dense(64, activation='relu'),
+            Dense(2)
+        ])
 
-inputs = {'query': X, 'key': X, 'value': X}
-attention_layer = MultiHeadAttention(d_model, num_heads)
-output = attention_layer(inputs)
+    def call(self, inputs):
+        x = self.attention(inputs)
+        x = self.ffn(x)
+        return x
 
-# Print the result
+# Instantiate the model
+model = MyModel(d_model=4, num_heads=2)
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=1000, verbose=0)
+
+# Evaluate the model
+predictions = model({'query': X, 'key': X, 'value': X})
 print("Input:")
 print(X.numpy())
-print("\nOutput:")
-print(output.numpy())
+print("\nGround Truth:")
+print(Y.numpy())
+print("\nPredictions:")
+print(predictions.numpy())
