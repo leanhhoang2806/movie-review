@@ -127,9 +127,9 @@ def main():
 
     print(predictions)
 
-    word_list = [tokenizer.decode(int(val)) for val in predictions[0].numpy()]
+    # word_list = [tokenizer.decode(int(val)) for val in predictions[0].numpy()]
 
-    print(word_list)
+    # print(word_list)
 
     # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten()]
     
