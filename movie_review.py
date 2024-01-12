@@ -124,9 +124,8 @@ def main():
 
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
-    target = predictions[0][0]
 
-    word_list = [tokenizer.decode(int(val)) for val in predictions.numpy()]
+    word_list = [tokenizer.decode(int(val)) for val in predictions[0].numpy()]
     print(word_list)
 
     # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten()]
