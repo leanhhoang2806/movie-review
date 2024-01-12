@@ -126,7 +126,8 @@ def main():
     predictions = model({'query': X, 'key': X, 'value': X})
 
     words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten()]
-    print(words_list)
+    
+    words_list = [print(word) for word in words_list]
 
     # word_list = [ ''.join(item) for item in words_list]
     # human_readable = ' '.join(word_list)
