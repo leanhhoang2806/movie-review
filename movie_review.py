@@ -7,7 +7,6 @@ import tensorflow as tf
 from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
-from tensorflow.keras.layers import LSTM, MultiHeadAttention
 import os
 from tensorflow import keras
 from tensorflow.keras import layers
