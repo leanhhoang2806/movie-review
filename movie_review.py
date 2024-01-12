@@ -7,7 +7,7 @@ import tensorflow as tf
 from data_loader.load_imdb import load_imdb_dataset
 from processors.tokenizer import preprocess_review_data, preprocess_df
 from training_strategy.distributed_training import grid_search
-from models.model_builder import MultiHeadAttention
+from tensorflow.keras.layers import LSTM, MultiHeadAttention
 import os
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -42,12 +42,14 @@ def main():
     input_shape = len(extracted_df['review_token'].tolist()[0])
     output_shape = len(extracted_df['movie_names_token'].tolist()[0])
 
-    # Define the neural network model
-    model = keras.Sequential([
-        layers.Dense(units=64, activation='relu', input_shape=(input_shape,)),
-        layers.Dense(units=output_shape)  # Output layer with 2 units for the target values
-    ])
+    X_reshaped = X.reshape((X.shape[0], X.shape[1], 1))
 
+    # Define the neural network model with an LSTM layer and MultiHeadAttention
+    model = keras.Sequential([
+        LSTM(units=64, activation='relu', input_shape=(input_shape, 1), return_sequences=True),
+        MultiHeadAttention(num_heads=2, key_dim=64),  # Adjust num_heads and key_dim as needed
+        layers.Dense(units=output_shape)  # Output layer with units matching target shape
+    ])
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 
