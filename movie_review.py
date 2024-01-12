@@ -56,7 +56,7 @@ def main():
 
     # Make predictions
     print(f"test_review_token: {test_review_token}")
-    predictions = model.predict(X[0])
+    predictions = model.predict(X)
     # decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
     # print(f"Given a review {test_review_token},  \n the movie name prediction is {decoded_predictions}, \n the actual movie name is  ")
 
