@@ -1,64 +1,143 @@
-import re
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from transformers import BertTokenizer
+# import re
+# import pandas as pd
+# import numpy as np
+# from sklearn.model_selection import train_test_split
+# from transformers import BertTokenizer
+# import tensorflow as tf
+# from data_loader.load_imdb import load_imdb_dataset
+# from processors.tokenizer import preprocess_review_data, preprocess_df
+# from training_strategy.distributed_training import grid_search
+# from tensorflow.keras.layers import LSTM, MultiHeadAttention
+# import os
+# from tensorflow import keras
+# from tensorflow.keras import layers
+
+# def main():
+#     tf.keras.backend.clear_session()
+
+#     csv_file_path = './IMDB Dataset.csv'
+#     imdb_df = load_imdb_dataset(csv_file_path)
+#     print(f"target for testing predictionis : {imdb_df.iloc[0]}")
+
+#     movie_name_pattern = re.compile(r'"([^"]+)"')
+
+#     extracted_data = []
+
+#     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+
+#     for review in imdb_df['review']:
+#         data = preprocess_review_data(review, tokenizer, movie_name_pattern)
+#         if data:
+#             extracted_data.append(data)
+
+#     max_review_length = max([len(data['review_token']) for data in extracted_data])
+#     max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
+#     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    
+
+#     # Split the data into features (X) and target (y)
+#     X = tf.constant(extracted_df['review_token'].tolist())
+#     Y = tf.constant(extracted_df['movie_names_token'].tolist())
+#     input_shape = len(extracted_df['review_token'].tolist()[0])
+#     output_shape = len(extracted_df['movie_names_token'].tolist()[0])
+
+#     # Define the neural network model
+#     model = keras.Sequential([
+#         layers.Dense(units=64, activation='relu', input_shape=(input_shape,)),
+#         layers.Dense(units=output_shape)  # Output layer with 2 units for the target values
+#     ])
+
+#     # Compile the model
+#     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+
+#     # Train the model
+#     model.fit(X, Y, epochs=1000, verbose=1)
+
+#     predictions = model.predict(X)
+#     decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
+#     print(f"the movie name prediction is {decoded_predictions}, \n the actual review is  {extracted_data[0]['review']} ")
+
+
+    
+# if __name__ == "__main__":
+#     main()
+
+
+
 import tensorflow as tf
-from data_loader.load_imdb import load_imdb_dataset
-from processors.tokenizer import preprocess_review_data, preprocess_df
-from training_strategy.distributed_training import grid_search
-from tensorflow.keras.layers import LSTM, MultiHeadAttention
-import os
-from tensorflow import keras
-from tensorflow.keras import layers
+from tensorflow.keras.layers import Dense, Input
 
-def main():
-    tf.keras.backend.clear_session()
+# Input data
+X = tf.constant([[1, 2, 1], [2, 1, 2], [3, 5, 1]], dtype=tf.float32)
+Y = tf.constant([[2, 0], [2, 1], [5, 4]], dtype=tf.float32)
 
-    csv_file_path = './IMDB Dataset.csv'
-    imdb_df = load_imdb_dataset(csv_file_path)
-    print(f"target for testing predictionis : {imdb_df.iloc[0]}")
+# Multihead Attention layer
+class MultiHeadAttention(tf.keras.layers.Layer):
+    def __init__(self, d_model, num_heads):
+        super(MultiHeadAttention, self).__init__()
+        self.num_heads = num_heads
+        self.d_model = d_model
 
-    movie_name_pattern = re.compile(r'"([^"]+)"')
+        assert d_model % self.num_heads == 0
 
-    extracted_data = []
+        self.depth = d_model // self.num_heads
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.query_dense = Dense(d_model)
+        self.key_dense = Dense(d_model)
+        self.value_dense = Dense(d_model)
 
-    for review in imdb_df['review']:
-        data = preprocess_review_data(review, tokenizer, movie_name_pattern)
-        if data:
-            extracted_data.append(data)
+        self.dense = Dense(d_model)
 
-    max_review_length = max([len(data['review_token']) for data in extracted_data])
-    max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
-    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
-    
+    def split_heads(self, x, batch_size):
+        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
+        return tf.transpose(x, perm=[0, 2, 1, 3])
 
-    # Split the data into features (X) and target (y)
-    X = tf.constant(extracted_df['review_token'].tolist())
-    Y = tf.constant(extracted_df['movie_names_token'].tolist())
-    input_shape = len(extracted_df['review_token'].tolist()[0])
-    output_shape = len(extracted_df['movie_names_token'].tolist()[0])
+    def call(self, inputs):
+        query, key, value = inputs['query'], inputs['key'], inputs['value']
+        batch_size = tf.shape(query)[0]
 
-    # Define the neural network model
-    model = keras.Sequential([
-        layers.Dense(units=64, activation='relu', input_shape=(input_shape,)),
-        layers.Dense(units=output_shape)  # Output layer with 2 units for the target values
-    ])
+        # Linear layers
+        query = self.query_dense(query)
+        key = self.key_dense(key)
+        value = self.value_dense(value)
 
-    # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+        # Split heads
+        query = self.split_heads(query, batch_size)
+        key = self.split_heads(key, batch_size)
+        value = self.split_heads(value, batch_size)
 
-    # Train the model
-    model.fit(X, Y, epochs=1000, verbose=1)
+        # Scaled dot-product attention
+        scaled_attention = self.scaled_dot_product_attention(query, key, value)
 
-    predictions = model.predict(X)
-    decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
-    print(f"the movie name prediction is {decoded_predictions}, \n the actual review is  {extracted_data[0]['review']} ")
+        # Combine heads
+        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
+        concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.d_model))
 
+        # Final linear layer
+        output = self.dense(concat_attention)
 
-    
-if __name__ == "__main__":
-    main()
+        return output
 
+    def scaled_dot_product_attention(self, query, key, value):
+        matmul_qk = tf.matmul(query, key, transpose_b=True)
+        dk = tf.cast(tf.shape(key)[-1], tf.float32)
+        scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
+
+        attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
+        output = tf.matmul(attention_weights, value)
+
+        return output
+
+# Create the model
+num_heads = 2
+d_model = 4
+
+inputs = {'query': X, 'key': X, 'value': X}
+attention_layer = MultiHeadAttention(d_model, num_heads)
+output = attention_layer(inputs)
+
+# Print the result
+print("Input:")
+print(X.numpy())
+print("\nOutput:")
+print(output.numpy())
