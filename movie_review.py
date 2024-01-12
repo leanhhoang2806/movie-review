@@ -69,21 +69,19 @@ class MultiHeadAttention(tf.keras.layers.Layer):
 
         return output
 
-# Define the model
 class MyModel(tf.keras.Model):
     def __init__(self, d_model, num_heads):
         super(MyModel, self).__init__()
         self.attention = MultiHeadAttention(d_model, num_heads)
         self.ffn = tf.keras.Sequential([
             Dense(64, activation='relu'),
-            Dense(2)
+            Dense(9)  # Assuming 9 as the output dimension based on Y.shape[1]
         ])
 
     def call(self, inputs):
         x = self.attention(inputs)
         x = self.ffn(x)
         return x
-
 
 
 def main():
@@ -112,11 +110,11 @@ def main():
     # Split the data into features (X) and target (y)
     X = tf.constant(extracted_df['review_token'].tolist())
     Y = tf.constant(extracted_df['movie_names_token'].tolist())
-    print(f"X.shape : {X.shape}, and Y.shap: {Y.shape}")
-
+    print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
 
     # Instantiate the model
-    model = MyModel(d_model=4, num_heads=2)
+    model = MyModel(d_model=512, num_heads=8)  # Assuming d_model and num_heads based on your task
+
 
     # Compile the model
     model.compile(optimizer='adam', loss='mean_squared_error')
