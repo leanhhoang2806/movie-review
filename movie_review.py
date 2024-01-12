@@ -120,12 +120,16 @@ def main():
     model.compile(optimizer='adam', loss='mean_squared_error')
 
     # Train the model
-    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=1000, verbose=1)
+    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=100, verbose=1)
 
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
     # Convert predictions back to words using the tokenizer
-    decoded_predictions = [tokenizer.decode(pred) for pred in predictions.numpy()]
+    decoded_predictions = []
+
+    for pred in predictions.numpy():
+        decoded_sequence = [tokenizer.decode(int(token_id)) for token_id in pred]
+        decoded_predictions.append(decoded_sequence)
     
     # Add the decoded predictions to the dataframe
     imdb_df['predicted_movie_names'] = decoded_predictions
