@@ -85,7 +85,8 @@ def main():
     # Example usage:
 
     # Assuming your original X is a 2D tensor with shape (num_samples, sequence_length)
-    X_reshaped = X.reshape((X.shape[0], X.shape[1], 1))
+    X_reshaped = tf.reshape(X, (X.shape[0], X.shape[1], 1))
+
 
     # Input layer
     input_layer = Input(shape=(input_shape, 1))
