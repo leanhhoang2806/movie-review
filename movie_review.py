@@ -1,15 +1,15 @@
-import re
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from transformers import BertTokenizer
-import tensorflow as tf
-from data_loader.load_imdb import load_imdb_dataset
-from processors.tokenizer import preprocess_review_data, preprocess_df
-from training_strategy.distributed_training import grid_search
-import os
-from tensorflow import keras
-from tensorflow.keras import layers
+# import re
+# import pandas as pd
+# import numpy as np
+# from sklearn.model_selection import train_test_split
+# from transformers import BertTokenizer
+# import tensorflow as tf
+# from data_loader.load_imdb import load_imdb_dataset
+# from processors.tokenizer import preprocess_review_data, preprocess_df
+# from training_strategy.distributed_training import grid_search
+# import os
+# from tensorflow import keras
+# from tensorflow.keras import layers
 
 
 # def main():
@@ -68,9 +68,6 @@ from tensorflow.keras import layers
     
 # if __name__ == "__main__":
 #     main()
-
-
-
 import tensorflow as tf
 from tensorflow.keras.layers import Dense
 
@@ -149,7 +146,7 @@ class MyModel(tf.keras.Model):
         x = self.attention(inputs)
         x = self.ffn(x)
         return x
-#test
+
 # Instantiate the model
 model = MyModel(d_model=4, num_heads=2)
 
