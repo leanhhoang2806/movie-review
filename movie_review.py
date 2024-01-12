@@ -35,7 +35,6 @@ def main():
     extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
     
     test_review_token = extracted_df['review_token'].iloc[0]
-    expected_result = extracted_df['movie_names'].iloc[0]
 
     # Split the data into features (X) and target (y)
     X = tf.constant(extracted_df['review_token'].tolist())
@@ -58,7 +57,7 @@ def main():
     # Make predictions
     predictions = model.predict(test_review_token)
     decoded_predictions = tokenizer.decode(predictions[0], skip_special_tokens=True)
-    print(f"Given a review {test_review_token},  \n the movie name prediction is {decoded_predictions}, \n the actual movie name is {expected_result} ")
+    print(f"Given a review {test_review_token},  \n the movie name prediction is {decoded_predictions}, \n the actual movie name is  ")
 
 
     
