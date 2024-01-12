@@ -68,6 +68,8 @@
     
 # if __name__ == "__main__":
 #     main()
+
+
 import tensorflow as tf
 from tensorflow.keras.layers import Dense
 
@@ -153,10 +155,8 @@ model = MyModel(d_model=4, num_heads=2)
 # Compile the model
 model.compile(optimizer='adam', loss='mean_squared_error')
 
-# Train the model with an epoch-based loop
-epochs = 1000
-for epoch in range(epochs):
-    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=1, verbose=0)
+# Train the model
+model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=1000, verbose=1)
 
 # Evaluate the model
 predictions = model({'query': X, 'key': X, 'value': X})
@@ -166,4 +166,5 @@ print("\nGround Truth:")
 print(Y.numpy())
 print("\nPredictions:")
 print(predictions.numpy())
+
 
