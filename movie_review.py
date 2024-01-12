@@ -125,7 +125,7 @@ def main():
     # Evaluate the model
     predictions = model({'query': X, 'key': X, 'value': X})
 
-    words_list = [tokenizer.decode(int(val)) for val in predictions[0].numpy().flatten()]
+    words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten() if val.is_integer()]
 
     print(words_list)
     
