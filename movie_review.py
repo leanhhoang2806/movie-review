@@ -126,6 +126,8 @@ def main():
     predictions = model({'query': X, 'key': X, 'value': X})
     print(predictions.shape)
 
+    print(predictions[0])
+
     # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten() if float(val).is_integer()]
 
     # word_list = [ ''.join(item) for item in words_list]
