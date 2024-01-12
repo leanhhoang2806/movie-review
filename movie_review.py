@@ -149,7 +149,7 @@ class MyModel(tf.keras.Model):
         x = self.attention(inputs)
         x = self.ffn(x)
         return x
-
+#test
 # Instantiate the model
 model = MyModel(d_model=4, num_heads=2)
 
