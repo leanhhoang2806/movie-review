@@ -10,6 +10,7 @@ from training_strategy.distributed_training import grid_search
 import os
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.layers import Dense
 
 
 def main():
