@@ -13,78 +13,18 @@ from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM
 
 # Multihead Attention layer
-class MultiHeadAttention(tf.keras.layers.Layer):
-    def __init__(self, d_model, num_heads):
-        super(MultiHeadAttention, self).__init__()
-        self.num_heads = num_heads
-        self.d_model = d_model
-
-        assert d_model % self.num_heads == 0
-
-        self.depth = d_model // self.num_heads
-
-        self.query_dense = Dense(d_model)
-        self.key_dense = Dense(d_model)
-        self.value_dense = Dense(d_model)
-
-        self.dense = Dense(d_model)
-
-    def split_heads(self, x, batch_size):
-        x = tf.reshape(x, (batch_size, -1, self.num_heads, self.depth))
-        return tf.transpose(x, perm=[0, 2, 1, 3])
+class SimpleModel(tf.keras.Model):
+    def __init__(self, shape):
+        super(SimpleModel, self).__init__()
+        self.dense1 = Dense(64, activation='relu', input_shape=(shape,))
+        self.dense2 = Dense(32, activation='relu')
+        self.output_layer = Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
 
     def call(self, inputs):
-        query, key, value = inputs['query'], inputs['key'], inputs['value']
-        batch_size = tf.shape(query)[0]
-
-        # Linear layers
-        query = self.query_dense(query)
-        key = self.key_dense(key)
-        value = self.value_dense(value)
-
-        # Split heads
-        query = self.split_heads(query, batch_size)
-        key = self.split_heads(key, batch_size)
-        value = self.split_heads(value, batch_size)
-
-        # Scaled dot-product attention
-        scaled_attention = self.scaled_dot_product_attention(query, key, value)
-
-        # Combine heads
-        scaled_attention = tf.transpose(scaled_attention, perm=[0, 2, 1, 3])
-        concat_attention = tf.reshape(scaled_attention, (batch_size, -1, self.d_model))
-
-        # Final linear layer
-        output = self.dense(concat_attention)
-
+        x = self.dense1(inputs)
+        x = self.dense2(x)
+        output = self.output_layer(x)
         return output
-
-    def scaled_dot_product_attention(self, query, key, value):
-        matmul_qk = tf.matmul(query, key, transpose_b=True)
-        dk = tf.cast(tf.shape(key)[-1], tf.float32)
-        scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
-
-        attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
-        output = tf.matmul(attention_weights, value)
-
-        return output
-
-class MyModel(tf.keras.Model):
-    def __init__(self, d_model, num_heads):
-        super(MyModel, self).__init__()
-        self.attention = MultiHeadAttention(d_model, num_heads)
-        self.ffn = tf.keras.Sequential([
-            LSTM(64, activation='tanh', input_shape=(512, 1)),
-            Dense(32, activation='relu'),
-            Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
-        ])
-
-
-    def call(self, inputs):
-        x = self.attention(inputs)
-        x = self.ffn(x)
-        return x
-
 
 def main():
     tf.keras.backend.clear_session()
@@ -115,25 +55,25 @@ def main():
     print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
 
     # Instantiate the model
-    model = MyModel(d_model=512, num_heads=8) 
+    # model = SimpleModel(d_model=512, num_heads=8) 
 
 
-    # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    # # Compile the model
+    # model.compile(optimizer='adam', loss='mean_squared_error')
 
-    # Train the model
-    model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
+    # # Train the model
+    # model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
 
-    # Evaluate the model
-    predictions = model({'query': X, 'key': X, 'value': X})
+    # # Evaluate the model
+    # predictions = model({'query': X, 'key': X, 'value': X})
 
-    print(predictions.numpy().tolist()[0])
+    # print(predictions.numpy().tolist()[0])
 
-    word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
+    # word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
 
 
-    print(imdb_df['review'].iloc[0])
-    print(word_list)
+    # print(imdb_df['review'].iloc[0])
+    # print(word_list)
 
     
 if __name__ == "__main__":
