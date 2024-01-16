@@ -80,7 +80,7 @@ class MyModel(tf.keras.Model):
         ])
 
     def _custom_activation(self, x):
-        return np.round(np.maximum(x, 0)).astype(np.float32)
+        return np.round(np.maximum(x, 0)).astype(np.int32)
 
     def call(self, inputs):
         x = self.attention(inputs)
