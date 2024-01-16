@@ -129,6 +129,7 @@ def main():
 
     word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
 
+    print(imdb_df['review'].iloc[0])
     print(word_list)
 
     # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten()]
