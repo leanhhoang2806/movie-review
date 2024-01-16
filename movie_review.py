@@ -65,9 +65,9 @@ def main():
 
     predictions = model(X)
 
-    print(predictions.shape)
+    print(predictions.numpy().tolist()[0])
 
-    # word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
+    word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0]]
 
 
     # print(imdb_df['review'].iloc[0])
