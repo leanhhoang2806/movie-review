@@ -115,9 +115,9 @@ def main():
     # Instantiate the model
     model = MyModel(d_model=512, num_heads=8)  # Assuming d_model and num_heads based on your task
 
-
+    from tensorflow.keras.losses import CategoricalCrossentropy
     # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='adam', loss=CategoricalCrossentropy(), metrics=['accuracy'])
 
     # Train the model
     model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
