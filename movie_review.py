@@ -12,7 +12,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM
 
-# Multihead Attention layer
 class SimpleModel(tf.keras.Model):
     def __init__(self, in_shape, out_shape):
         super(SimpleModel, self).__init__()
@@ -62,12 +61,11 @@ def main():
     model.compile(optimizer='adam', loss='mean_squared_error')
 
     # # Train the model
-    # model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
+    model.fit(X, Y, epochs=10, verbose=1)
 
-    # # Evaluate the model
-    # predictions = model({'query': X, 'key': X, 'value': X})
+    predictions = model(X)
 
-    # print(predictions.numpy().tolist()[0])
+    print(predictions.shape)
 
     # word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
 
