@@ -55,7 +55,7 @@ def main():
     print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
 
     # Instantiate the model
-    model = SimpleModel(shape=X.shape[1], out_shape=Y.shape[1]) 
+    model = SimpleModel(in_shape=X.shape[1], out_shape=Y.shape[1]) 
 
 
     # # Compile the model
