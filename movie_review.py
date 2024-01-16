@@ -10,7 +10,7 @@ from training_strategy.distributed_training import grid_search
 import os
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, LSTM
 
 # Multihead Attention layer
 class MultiHeadAttention(tf.keras.layers.Layer):
@@ -74,7 +74,7 @@ class MyModel(tf.keras.Model):
         super(MyModel, self).__init__()
         self.attention = MultiHeadAttention(d_model, num_heads)
         self.ffn = tf.keras.Sequential([
-            Dense(64, activation='relu'),
+            LSTM(64, activation='tanh'),
             Dense(32, activation='relu'),
             Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
         ])
@@ -132,6 +132,7 @@ def main():
     print(predictions.numpy().tolist()[0])
 
     word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0][0]]
+
 
     print(imdb_df['review'].iloc[0])
     print(word_list)
