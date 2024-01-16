@@ -75,8 +75,12 @@ class MyModel(tf.keras.Model):
         self.attention = MultiHeadAttention(d_model, num_heads)
         self.ffn = tf.keras.Sequential([
             Dense(64, activation='relu'),
-            Dense(9)  # Assuming 9 as the output dimension based on Y.shape[1]
+            Dense(32, activation='relu'),
+            Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
         ])
+
+    def _custom_activation(self, x):
+        return np.round(np.maximum(x, 0)).astype(np.float32)
 
     def call(self, inputs):
         x = self.attention(inputs)
