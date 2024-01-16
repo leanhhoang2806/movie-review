@@ -14,11 +14,11 @@ from tensorflow.keras.layers import Dense, LSTM
 
 # Multihead Attention layer
 class SimpleModel(tf.keras.Model):
-    def __init__(self, shape):
+    def __init__(self, in_shape, out_shape):
         super(SimpleModel, self).__init__()
-        self.dense1 = Dense(64, activation='relu', input_shape=(shape,))
+        self.dense1 = Dense(64, activation='relu', input_shape=(in_shape,))
         self.dense2 = Dense(32, activation='relu')
-        self.output_layer = Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
+        self.output_layer = Dense(out_shape, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
 
     def call(self, inputs):
         x = self.dense1(inputs)
@@ -55,11 +55,11 @@ def main():
     print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
 
     # Instantiate the model
-    # model = SimpleModel(d_model=512, num_heads=8) 
+    model = SimpleModel(shape=X.shape[1], out_shape=Y.shape[1]) 
 
 
     # # Compile the model
-    # model.compile(optimizer='adam', loss='mean_squared_error')
+    model.compile(optimizer='adam', loss='mean_squared_error')
 
     # # Train the model
     # model.fit({'query': X, 'key': X, 'value': X}, Y, epochs=10, verbose=1)
