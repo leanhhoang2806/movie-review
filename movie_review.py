@@ -74,13 +74,11 @@ class MyModel(tf.keras.Model):
         super(MyModel, self).__init__()
         self.attention = MultiHeadAttention(d_model, num_heads)
         self.ffn = tf.keras.Sequential([
-            LSTM(64, activation='tanh'),
+            LSTM(64, activation='tanh', input_shape=(512, 1)),
             Dense(32, activation='relu'),
             Dense(9, activation='relu')  # Assuming 9 as the output dimension based on Y.shape[1]
         ])
 
-    def _custom_activation(self, x):
-        return np.round(np.maximum(x, 0)).astype(np.int32)
 
     def call(self, inputs):
         x = self.attention(inputs)
@@ -117,7 +115,7 @@ def main():
     print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
 
     # Instantiate the model
-    model = MyModel(d_model=512, num_heads=8)  # Assuming d_model and num_heads based on your task
+    model = MyModel(d_model=512, num_heads=8) 
 
 
     # Compile the model
@@ -136,17 +134,6 @@ def main():
 
     print(imdb_df['review'].iloc[0])
     print(word_list)
-
-    # words_list = [tokenizer.decode(int(val)) for val in predictions.numpy().flatten()]
-    
-    # words_list = [print(word) for word in words_list]
-
-    # word_list = [ ''.join(item) for item in words_list]
-    # human_readable = ' '.join(word_list)
-
-
-    # print(human_readable)
-    
 
     
 if __name__ == "__main__":
