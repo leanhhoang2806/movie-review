@@ -87,10 +87,9 @@ def main():
     for _ in range(3):  # Adjust the number of epochs
         for batch in train_dataloader:
             input_ids = batch['input_ids']
-            labels = input_ids.clone()
 
             optimizer.zero_grad()
-            outputs = model(input_ids, labels=labels)
+            outputs = model(input_ids, labels=input_ids)
             loss = outputs.loss
             loss.backward()
             optimizer.step()
