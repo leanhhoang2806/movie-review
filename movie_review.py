@@ -95,7 +95,7 @@ def main():
             loss.backward()
             optimizer.step()
 
-    prompt = "What is the capital of France?"
+    prompt = "Give me the review of movie Cold Mountain"
     response = generate_response(prompt, model, tokenizer)
     print(response)
     
