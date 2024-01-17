@@ -45,7 +45,8 @@ def main():
             extracted_data.append(data)
 
     extracted_df = pd.DataFrame(extracted_data)
-    print(extracted_df.head())
+    focus_data = extracted_df[['review', 'movie_names']]
+    print(focus_data.head())
     
     
 
