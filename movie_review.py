@@ -71,6 +71,7 @@ def main():
     training_data = [ {"answer": row['review'], "question": row['movie_names']} for _, row in focus_data.iterrows()]
 
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
     
     config = GPT2Config.from_pretrained("gpt2")
     model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
