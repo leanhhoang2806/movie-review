@@ -62,7 +62,7 @@ def main():
     model.compile(optimizer='adam', loss='mean_squared_error')
 
     # # Train the model
-    model.fit(X, Y, epochs=10, verbose=1)
+    model.fit(X, Y, epochs=1000, verbose=1)
 
     predictions = model(X)
 
