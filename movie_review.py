@@ -44,36 +44,11 @@ def main():
         if data:
             extracted_data.append(data)
 
-    max_review_length = max([len(data['review_token']) for data in extracted_data])
-    max_movie_length = max([len(data['movie_names_token']) for data in extracted_data])
-    extracted_df = preprocess_df(extracted_data, max_review_length, max_movie_length)
+    extracted_df = pd.DataFrame(extracted_data)
+    print(extracted_df.head())
+    
     
 
-    # Split the data into features (X) and target (y)
-    X = tf.constant(extracted_df['review_token'].tolist())
-    Y = tf.constant(extracted_df['movie_names_token'].tolist())
-    print(f"X.shape : {X.shape}, and Y.shape: {Y.shape}")
-
-    # Instantiate the model
-    model = SimpleModel(in_shape=X.shape[1], out_shape=Y.shape[1]) 
-
-
-    # # Compile the model
-    model.compile(optimizer='adam', loss='mean_squared_error')
-
-    # # Train the model
-    model.fit(X, Y, epochs=1000, verbose=1)
-
-    predictions = model(X)
-
-    print(predictions.numpy().tolist()[0])
-
-    word_list = [tokenizer.decode(int(val)) for val in predictions.numpy().tolist()[0]]
-    print(word_list)
-
-
-    # print(imdb_df['review'].iloc[0])
-    # print(word_list)
 
     
 if __name__ == "__main__":
