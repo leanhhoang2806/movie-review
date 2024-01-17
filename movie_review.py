@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering, AdamW
 import pandas as pd
-model.save_pretrained('custom_qa_model')
 
 
 def main():
