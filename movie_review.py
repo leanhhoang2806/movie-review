@@ -47,6 +47,9 @@ def main():
     extracted_df = pd.DataFrame(extracted_data)
     focus_data = extracted_df[['review', 'movie_names']]
     print(focus_data.head())
+
+    for _, row in focus_data.iterrows():
+        print(row['movies_name'])
     
     
 
