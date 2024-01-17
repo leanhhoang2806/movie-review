@@ -49,7 +49,8 @@ def main():
     print(focus_data.head())
 
     for _, row in focus_data.iterrows():
-        print(row['movies_name'])
+        print(row)
+        break
     
     
 
