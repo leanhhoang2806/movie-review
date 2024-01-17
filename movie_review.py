@@ -51,7 +51,9 @@ class QADataset(Dataset):
         pair = self.data[idx]
         input_text = f"Q: {pair['question']} A: {pair['answer']}"
         input_ids = self.tokenizer.encode(input_text, max_length=self.max_length, return_tensors='pt', truncation=True, padding='max_length')
-        return {'input_ids': input_ids}
+        return {
+            'input_ids': input_ids,
+            'attention_mask': input_ids['attention_mask'],}
 
 def main():
     tf.keras.backend.clear_session()
@@ -93,15 +95,11 @@ def main():
         for batch in DataLoader(tokenized_dataset, batch_size=2, shuffle=True):
             input_ids = batch['input_ids']
             attention_mask = batch['attention_mask']
-            start_positions = batch['start_positions']
-            end_positions = batch['end_positions']
 
             optimizer.zero_grad()
             outputs = model(
                 input_ids=input_ids,
-                attention_mask=attention_mask,
-                start_positions=start_positions,
-                end_positions=end_positions
+                attention_mask=attention_mask
             )
 
             loss = outputs.loss
