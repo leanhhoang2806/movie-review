@@ -48,10 +48,10 @@ def main():
     focus_data = extracted_df[['review', 'movie_names']]
     print(focus_data.head())
 
-    for _, row in focus_data.iterrows():
-        print(f"type of row {type(row)}")
-        print(row['movie_names'])
-        print(row['review'])
+    training_data = [ {"question": row['review'], "answer": row['movie_names']} for _, row in focus_data.iterrows()]
+
+    for item in training_data:
+        print(item)
         break
     
     
