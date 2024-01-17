@@ -11,6 +11,8 @@ import os
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Dense, LSTM
+from transformers import GPT2Tokenizer, GPT2LMHeadModel
+import torch
 
 class SimpleModel(tf.keras.Model):
     def __init__(self, in_shape, out_shape):
@@ -48,11 +50,18 @@ def main():
     focus_data = extracted_df[['review', 'movie_names']]
     print(focus_data.head())
 
-    training_data = [ {"question": row['review'], "answer": row['movie_names']} for _, row in focus_data.iterrows()]
+    training_data = [ {"answer": row['review'], "question": row['movie_names']} for _, row in focus_data.iterrows()]
 
-    for item in training_data:
-        print(item)
-        break
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    model = GPT2LMHeadModel.from_pretrained("gpt2")
+
+    input_ids = []
+    for example in training_data:
+        input_text = f"Q: {example['question']} A: {example['answer']}"
+        encoded_text = tokenizer.encode(input_text, return_tensors='pt')
+        input_ids.append(encoded_text)
+
+    input_ids = torch.cat(input_ids, dim=0)
     
     
 
