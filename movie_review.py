@@ -49,7 +49,9 @@ def main():
     print(focus_data.head())
 
     for _, row in focus_data.iterrows():
-        print(row)
+        print(f"type of row {type(row)}")
+        print(row['movie_names'])
+        print(row['review'])
         break
     
     
