@@ -22,6 +22,13 @@ from torch.nn import CrossEntropyLoss
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
+from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
+from torch.utils.data import DataLoader, Dataset
+from torch.optim import AdamW
+from transformers import squad_convert_examples_to_features
+from transformers.data.processors.squad import SquadV2Processor
+from transformers.data.processors.squad import squad_convert_examples_to_features
+import torch
 
 def generate_response(prompt, model, tokenizer, max_length=100):
     input_text = f"Q: {prompt} A:"
@@ -66,38 +73,40 @@ def main():
 
     extracted_df = pd.DataFrame(extracted_data)
     focus_data = extracted_df[['review', 'movie_names']]
-    print(focus_data.head())
 
     training_data = [ {"answer": row['review'], "question": row['movie_names']} for _, row in focus_data.iterrows()]
 
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-    
-    config = GPT2Config.from_pretrained("gpt2")
-    model = GPT2LMHeadModel.from_pretrained("gpt2", config=config)
+    print(training_data[0])
+
+
+    tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
     tokenized_dataset = QADataset(training_data, tokenizer)
-    model = GPT2LMHeadModel.from_pretrained("gpt2")
-    model.train()
 
+    # Load pre-trained DistilBERT model
+    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-cased")
+
+    # Define optimizer and learning rate
     optimizer = AdamW(model.parameters(), lr=5e-5)
-    loss_fn = CrossEntropyLoss()
-
-    train_dataloader = DataLoader(tokenized_dataset, batch_size=4, shuffle=True)
 
     # Training loop
-    for _ in range(3):  # Adjust the number of epochs
-        for batch in train_dataloader:
+    for epoch in range(3):  # Adjust the number of epochs
+        for batch in DataLoader(tokenized_dataset, batch_size=2, shuffle=True):
             input_ids = batch['input_ids']
+            attention_mask = batch['attention_mask']
+            start_positions = batch['start_positions']
+            end_positions = batch['end_positions']
 
             optimizer.zero_grad()
-            outputs = model(input_ids, labels=input_ids)
+            outputs = model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                start_positions=start_positions,
+                end_positions=end_positions
+            )
+
             loss = outputs.loss
             loss.backward()
             optimizer.step()
-
-    prompt = "Give me the review of movie Cold Mountain"
-    response = generate_response(prompt, model, tokenizer)
-    print(response)
     
 if __name__ == "__main__":
     main()
