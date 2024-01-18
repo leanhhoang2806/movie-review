@@ -84,6 +84,11 @@ def main():
 
     extracted_df = pd.DataFrame(extracted_data)
     focus_data = extracted_df[['review', 'movie_names']]
+    for _, row in focus_data.iterrows():
+        print(row)
+        print(re.search(row['movie_names'], row['review']).start() or 0)
+        print(re.search(row['movie_names'], row['review']).end() or 0)
+        break
 
     training_data = [ {
         "answer": row['review'], 
