@@ -55,7 +55,7 @@ class QADataset(Dataset):
             max_length=self.max_length,
             return_tensors='pt',
             truncation=True,
-            padding=True
+            padding='max_length'
         )
         return {
             'input_ids': input_ids['input_ids'].squeeze(),
