@@ -49,7 +49,7 @@ class QADataset(Dataset):
 
     def __getitem__(self, idx):
         pair = self.data[idx]
-        input_text = f"question: {pair['question']} context: {pair['context']}"
+        input_text = f"question: {pair['question']} context: {pair['movie_names']}"
         input_ids = self.tokenizer.encode_plus(
             input_text,
             max_length=self.max_length,
