@@ -49,7 +49,6 @@ class QADataset(Dataset):
 
     def __getitem__(self, idx):
         pair = self.data[idx]
-        print(pair)
         input_text = f"question: {pair['question']} context: {pair['answer']}"
         input_ids = self.tokenizer.encode_plus(
             input_text,
@@ -59,8 +58,8 @@ class QADataset(Dataset):
             padding=True
         )
         return {
-            'input_ids': input_ids['input_ids'],
-            'attention_mask': input_ids['attention_mask']
+            'input_ids': input_ids['input_ids'].squeeze(),
+            'attention_mask': input_ids['attention_mask'].squeeze()
         }
 
 def main():
@@ -85,8 +84,6 @@ def main():
     focus_data = extracted_df[['review', 'movie_names']]
 
     training_data = [ {"answer": row['review'], "question": row['movie_names']} for _, row in focus_data.iterrows()]
-
-    print(training_data[0])
 
 
     tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
