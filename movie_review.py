@@ -59,7 +59,9 @@ class QADataset(Dataset):
         )
         return {
             'input_ids': input_ids['input_ids'].squeeze(),
-            'attention_mask': input_ids['attention_mask'].squeeze()
+            'attention_mask': input_ids['attention_mask'].squeeze(),
+            'start_positions': torch.tensor(pair['start_positions']),
+            'end_positions': torch.tensor(pair['end_positions'])
         }
 
 def main():
@@ -83,8 +85,13 @@ def main():
     extracted_df = pd.DataFrame(extracted_data)
     focus_data = extracted_df[['review', 'movie_names']]
 
-    training_data = [ {"answer": row['review'], "question": row['movie_names']} for _, row in focus_data.iterrows()]
+    training_data = [ {
+        "answer": row['review'], 
+        "question": row['movie_names'], 
+        "start_positions": re.search(row['movie_names'], row['review']).start(),
+        "end_positions": re.search(row['movie_names'], row['review']).end()} for _, row in focus_data.iterrows()]
 
+    print(f"position of the answer {training_data[0]}")
 
     tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
     tokenized_dataset = QADataset(training_data, tokenizer)
@@ -100,11 +107,15 @@ def main():
         for batch in DataLoader(tokenized_dataset, batch_size=2, shuffle=True):
             input_ids = batch['input_ids']
             attention_mask = batch['attention_mask']
+            start_positions = batch['start_positions']
+            end_positions = batch['end_positions']
 
             optimizer.zero_grad()
             outputs = model(
                 input_ids=input_ids,
-                attention_mask=attention_mask
+                attention_mask=attention_mask,
+                start_positions=start_positions,
+                end_positions=end_positions
             )
 
             loss = outputs.loss
