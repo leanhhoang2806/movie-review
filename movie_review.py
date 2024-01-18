@@ -93,10 +93,9 @@ def main():
     training_data = [ {
         "answer": row['review'], 
         "question": row['movie_names'], 
-        "start_positions": re.search(row['movie_names'], row['review']).start(),
-        "end_positions": re.search(row['movie_names'], row['review']).end()} 
-        for _, row in focus_data.iterrows()
-        if re.search(row['movie_names'], row['review']).start() and re.search(row['movie_names'], row['review']).end()]
+        "start_positions": re.search(re.escape(row['movie_names']), row['review']).start(),
+        "end_positions": re.search(re.escape(row['movie_names']), row['review']).end()} 
+        for _, row in focus_data.iterrows()]
 
     print(f"position of the answer {training_data[0]}")
 
