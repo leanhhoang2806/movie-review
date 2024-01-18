@@ -97,6 +97,8 @@ def main():
     for epoch in range(3):  # Adjust the number of epochs
         for batch in DataLoader(tokenized_dataset, batch_size=2, shuffle=True):
             input_ids = batch['input_ids']
+            print(input_ids)
+            break
             attention_mask = batch['attention_mask']
             start_positions = batch['start_positions']
             end_positions = batch['end_positions']
