@@ -1,33 +1,18 @@
 import re
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
 from transformers import BertTokenizer
 import tensorflow as tf
 from data_loader.load_imdb import load_imdb_dataset
-from processors.tokenizer import preprocess_review_data, preprocess_df
-from training_strategy.distributed_training import grid_search
-import os
-from tensorflow import keras
-from tensorflow.keras import layers
-from tensorflow.keras.layers import Dense, LSTM
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
-from transformers import GPT2LMHeadModel, GPT2Config, GPT2Tokenizer, TextDataset, DataCollatorForLanguageModeling, Trainer, TrainingArguments
+from processors.tokenizer import preprocess_review_data
 import torch
 from torch.utils.data import Dataset
-from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from torch.utils.data import Dataset
-from torch import LongTensor
-from torch.nn import CrossEntropyLoss
 import torch
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW
-from transformers import squad_convert_examples_to_features
-from transformers.data.processors.squad import SquadV2Processor
-from transformers.data.processors.squad import squad_convert_examples_to_features
 import torch
 
 def generate_response(prompt, model, tokenizer, max_length=100):

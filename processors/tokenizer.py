@@ -2,7 +2,6 @@ import re
 import string
 import pandas as pd
 from itertools import chain
-from transformers import BertTokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 def get_bert_token(word, tokenizer):
