@@ -5,7 +5,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Load the IMDb dataset (you can replace this with your own dataset)
 from datasets import load_dataset
-import tqdm
+from tqdm import tqdm
 
 dataset = load_dataset("imdb")
 
