@@ -85,9 +85,10 @@ with strategy.scope():
         # Train the model
         for i, batch in enumerate(train_dataset):
             with tf.GradientTape() as tape:
-                input_ids = batch["input_ids"]
-                attention_mask = batch["attention_mask"]
-                labels = batch["labels"]
+                input_ids = batch[0]["input_ids"]  # Fix the key to access input_ids
+                attention_mask = batch[0]["attention_mask"]
+                labels = batch[1]
+
                 outputs = distributed_model(input_ids, attention_mask=attention_mask, labels=labels)
                 loss = outputs.loss
 
