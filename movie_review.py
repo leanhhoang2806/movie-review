@@ -27,27 +27,33 @@ encoded_data = tokenizer(
     return_tensors="tf",
 )
 
-# Use 80% of the data for training and 20% for validation
-train_size = int(0.8 * len(dataset["train"]))
-val_size = len(dataset["train"]) - train_size
-
-train_dataset = tf.data.Dataset.from_tensor_slices(
-    ({k: v[:train_size] for k, v in encoded_data.items()}, dataset["train"]["label"][:train_size])
-)
-val_dataset = tf.data.Dataset.from_tensor_slices(
-    ({k: v[train_size:] for k, v in encoded_data.items()}, dataset["train"]["label"][train_size:])
-)
-
-batch_size = 8
-learning_rate = 2e-5
-epochs = 3
-
-# Batch and shuffle the datasets
-train_dataset = train_dataset.shuffle(buffer_size=10000).batch(batch_size)
-val_dataset = val_dataset.batch(batch_size)
-
 # Use the strategy to create and compile the model
 with strategy.scope():
+    encoded_data = tokenizer(
+    dataset["train"]["text"],
+    padding=True,
+    truncation=True,
+    return_tensors="tf",
+)
+    # Use 80% of the data for training and 20% for validation
+    train_size = int(0.8 * len(dataset["train"]))
+    val_size = len(dataset["train"]) - train_size
+
+    train_dataset = tf.data.Dataset.from_tensor_slices(
+        ({k: v[:train_size] for k, v in encoded_data.items()}, dataset["train"]["label"][:train_size])
+    )
+    val_dataset = tf.data.Dataset.from_tensor_slices(
+        ({k: v[train_size:] for k, v in encoded_data.items()}, dataset["train"]["label"][train_size:])
+    )
+
+    batch_size = 8
+    learning_rate = 2e-5
+    epochs = 3
+
+    # Batch and shuffle the datasets
+    train_dataset = train_dataset.shuffle(buffer_size=10000).batch(batch_size)
+    val_dataset = val_dataset.batch(batch_size)
+
     # Create the model inside the strategy scope
     inputs = {k: Input(shape=v.shape[1:], dtype=v.dtype, name=k) for k, v in encoded_data.items()}
     outputs = model(inputs)
