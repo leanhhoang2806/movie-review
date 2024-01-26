@@ -1,118 +1,103 @@
-import re
-import pandas as pd
-from transformers import BertTokenizer
-import tensorflow as tf
-from data_loader.load_imdb import load_imdb_dataset
-from processors.tokenizer import preprocess_review_data
 import torch
-from torch.utils.data import Dataset
-from torch.utils.data import Dataset
-import torch
-from torch.optim import AdamW
-from torch.utils.data import DataLoader
-from transformers import DistilBertTokenizer, DistilBertForQuestionAnswering
-from torch.utils.data import DataLoader, Dataset
-from torch.optim import AdamW
-import torch
+from transformers import BertTokenizer, BertForSequenceClassification, AdamW
+from torch.utils.data import DataLoader, random_split
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-def generate_response(prompt, model, tokenizer, max_length=100):
-    input_text = f"Q: {prompt} A:"
-    input_ids = tokenizer.encode(input_text, return_tensors='pt')
-    output = model.generate(input_ids, max_length=max_length, num_beams=5, no_repeat_ngram_size=2, top_k=50, top_p=0.95)
-    response = tokenizer.decode(output[0], skip_special_tokens=True)
-    return response
+# Load the IMDb dataset (you can replace this with your own dataset)
+from datasets import load_dataset
 
+dataset = load_dataset("imdb")
 
-class QADataset(Dataset):
-    def __init__(self, data, tokenizer, max_length=128):
-        self.data = data
-        self.tokenizer = tokenizer
-        self.max_length = max_length
+# Tokenize the dataset
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+encoded_data = tokenizer(
+    dataset["train"]["text"],
+    padding=True,
+    truncation=True,
+    return_tensors="pt",
+)
 
-    def __len__(self):
-        return len(self.data)
+# Prepare the DataLoader
+class MyDataset(torch.utils.data.Dataset):
+    def __init__(self, encodings, labels):
+        self.encodings = encodings
+        self.labels = labels
 
     def __getitem__(self, idx):
-        pair = self.data[idx]
-        input_text = f"question: {pair['question']} context: {pair['answer']}"
-        input_ids = self.tokenizer.encode_plus(
-            input_text,
-            max_length=self.max_length,
-            return_tensors='pt',
-            truncation=True,
-            padding='max_length'
-        )
-        return {
-            'input_ids': input_ids['input_ids'].squeeze(),
-            'attention_mask': input_ids['attention_mask'].squeeze(),
-            'start_positions': torch.tensor(pair['start_positions']),
-            'end_positions': torch.tensor(pair['end_positions'])
-        }
+        item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        item["labels"] = torch.tensor(self.labels[idx])
+        return item
 
-def main():
-    tf.keras.backend.clear_session()
+    def __len__(self):
+        return len(self.labels)
 
-    csv_file_path = './IMDB Dataset.csv'
-    imdb_df = load_imdb_dataset(csv_file_path)
-    print(f"target for testing predictionis : {imdb_df.iloc[0]}")
+# Use 80% of the data for training and 20% for validation
+train_size = int(0.8 * len(dataset["train"]))
+val_size = len(dataset["train"]) - train_size
 
-    movie_name_pattern = re.compile(r'"([^"]+)"')
+train_dataset = MyDataset(
+    {k: v[:train_size] for k, v in encoded_data.items()},
+    dataset["train"]["label"][:train_size],
+)
 
-    extracted_data = []
+val_dataset = MyDataset(
+    {k: v[train_size:] for k, v in encoded_data.items()},
+    dataset["train"]["label"][train_size:],
+)
 
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Load the pre-trained BERT model for sequence classification
+model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
 
-    for review in imdb_df['review']:
-        data = preprocess_review_data(review, tokenizer, movie_name_pattern)
-        if data:
-            extracted_data.append(data)
+# Training parameters
+batch_size = 8
+learning_rate = 2e-5
+epochs = 3
 
-    extracted_df = pd.DataFrame(extracted_data)
-    focus_data = extracted_df[['review', 'movie_names']]
-    for _, row in focus_data.iterrows():
-        print(row)
-        print(re.search(row['movie_names'], row['review']).start() or 0)
-        print(re.search(row['movie_names'], row['review']).end() or 0)
-        break
+# DataLoader
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-    training_data = [ {
-        "answer": row['review'], 
-        "question": row['movie_names'], 
-        "start_positions": re.search(re.escape(row['movie_names']), row['review']).start(),
-        "end_positions": re.search(re.escape(row['movie_names']), row['review']).end()} 
-        for _, row in focus_data.iterrows()]
+# Optimizer and loss function
+optimizer = AdamW(model.parameters(), lr=learning_rate)
+loss_fn = torch.nn.CrossEntropyLoss()
 
-    print(f"position of the answer {training_data[0]}")
+# Training loop
+for epoch in range(epochs):
+    model.train()
+    for batch in train_loader:
+        optimizer.zero_grad()
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        labels = batch["labels"]
+        outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+        loss = outputs.loss
+        loss.backward()
+        optimizer.step()
 
-    tokenizer = DistilBertTokenizer.from_pretrained("distilbert-base-cased")
-    tokenized_dataset = QADataset(training_data, tokenizer)
-
-    # Load pre-trained DistilBERT model
-    model = DistilBertForQuestionAnswering.from_pretrained("distilbert-base-cased")
-
-    # Define optimizer and learning rate
-    optimizer = AdamW(model.parameters(), lr=5e-5)
-
-    # Training loop
-    for epoch in range(3):  # Adjust the number of epochs
-        for batch in DataLoader(tokenized_dataset, batch_size=1, shuffle=True):
-            input_ids = batch['input_ids']
-            attention_mask = batch['attention_mask']
-            start_positions = batch['start_positions']
-            end_positions = batch['end_positions']
-
-            optimizer.zero_grad()
-            outputs = model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                start_positions=start_positions,
-                end_positions=end_positions
-            )
-
+    # Validation loop
+    model.eval()
+    val_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch in val_loader:
+            input_ids = batch["input_ids"]
+            attention_mask = batch["attention_mask"]
+            labels = batch["labels"]
+            outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
             loss = outputs.loss
-            loss.backward()
-            optimizer.step()
-    
-if __name__ == "__main__":
-    main()
+            val_loss += loss.item()
 
+            # Calculate accuracy
+            logits = outputs.logits
+            predictions = torch.argmax(logits, dim=1)
+            correct += (predictions == labels).sum().item()
+            total += labels.size(0)
+
+    # Print metrics
+    avg_val_loss = val_loss / len(val_loader)
+    accuracy = correct / total
+    print(f"Epoch {epoch + 1}/{epochs}, Loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.4f}")
+
+# Save the fine-tuned model
+model.save_pretrained("path/to/save/model")
