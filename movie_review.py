@@ -8,6 +8,7 @@ from tensorflow.keras import Input, Model
 
 # Load the IMDb dataset (you can replace this with your own dataset)
 from datasets import load_dataset
+
 # Create a strategy to distribute the training across multiple GPUs
 strategy = tf.distribute.MirroredStrategy()
 
@@ -15,7 +16,6 @@ print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
 # Load and preprocess the dataset
 dataset = load_dataset("imdb")
-
 
 # Use the strategy to create and compile the model
 with strategy.scope():
@@ -25,11 +25,12 @@ with strategy.scope():
     model = TFAutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
 
     encoded_data = tokenizer(
-    dataset["train"]["text"],
-    padding=True,
-    truncation=True,
-    return_tensors="tf",
-)
+        dataset["train"]["text"],
+        padding=True,
+        truncation=True,
+        return_tensors="tf",
+    )
+
     # Use 80% of the data for training and 20% for validation
     train_size = int(0.8 * len(dataset["train"]))
     val_size = len(dataset["train"]) - train_size
@@ -66,22 +67,39 @@ with strategy.scope():
         cycle=False
     )
 
+    # Create the Adam optimizer with the learning rate schedule
+    optimizer = Adam(learning_rate=lr_schedule)
+
     # Compile the model with the custom AdamW optimizer
     distributed_model.compile(
-        optimizer=Adam(learning_rate=lr_schedule),
+        optimizer=optimizer,
         loss=SparseCategoricalCrossentropy(),
         metrics=[SparseCategoricalAccuracy()],
     )
 
-# Training loop
-for epoch in range(epochs):
-    print(f"Epoch {epoch + 1}/{epochs}")
+    accumulation_steps = 4  # Accumulate gradients over 4 batches before updating weights
 
-    # Train the model
-    distributed_model.fit(train_dataset, epochs=1)
+    for epoch in range(epochs):
+        print(f"Epoch {epoch + 1}/{epochs}")
 
-    # Evaluate on the validation set
-    val_loss, val_accuracy = distributed_model.evaluate(val_dataset)
+        # Train the model
+        for i, batch in enumerate(train_dataset):
+            with tf.GradientTape() as tape:
+                input_ids = batch["input_ids"]
+                attention_mask = batch["attention_mask"]
+                labels = batch["labels"]
+                outputs = distributed_model(input_ids, attention_mask=attention_mask, labels=labels)
+                loss = outputs.loss
 
-    # Print metrics
-    print(f"Epoch {epoch + 1}/{epochs}, Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.4f}")
+            # Calculate gradients
+            gradients = tape.gradient(loss, distributed_model.trainable_variables)
+
+            # Accumulate gradients
+            if (i + 1) % accumulation_steps == 0:
+                optimizer.apply_gradients(zip(gradients, distributed_model.trainable_variables))
+
+        # Evaluate on the validation set
+        val_loss, val_accuracy = distributed_model.evaluate(val_dataset)
+
+        # Print metrics
+        print(f"Epoch {epoch + 1}/{epochs}, Loss: {val_loss:.4f}, Accuracy: {val_accuracy:.4f}")
