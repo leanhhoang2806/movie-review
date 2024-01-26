@@ -83,19 +83,18 @@ with strategy.scope():
         print(f"Epoch {epoch + 1}/{epochs}")
 
         # Train the model
-        for i, batch in enumerate(train_dataset):
-            with tf.GradientTape() as tape:
-                input_ids = batch[0]["input_ids"][0]
-                attention_mask = batch[0]["attention_mask"]
-                labels = batch[1]
+        for i, (batch_inputs, labels) in enumerate(train_dataset):
+            optimizer.zero_grad()
+            input_ids = batch_inputs["input_ids"]
+            attention_mask = batch_inputs["attention_mask"]
 
+            with tf.GradientTape() as tape:
                 outputs = distributed_model(input_ids, attention_mask=attention_mask, labels=labels)
                 loss = outputs.loss
 
-            # Calculate gradients
             gradients = tape.gradient(loss, distributed_model.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, distributed_model.trainable_variables))
 
-            # Accumulate gradients
             if (i + 1) % accumulation_steps == 0:
                 optimizer.apply_gradients(zip(gradients, distributed_model.trainable_variables))
 
