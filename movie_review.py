@@ -85,7 +85,7 @@ with strategy.scope():
         # Train the model
         for i, batch in enumerate(train_dataset):
             with tf.GradientTape() as tape:
-                input_ids = batch[0]["input_ids"]  # Fix the key to access input_ids
+                input_ids = batch[0]["input_ids"][0]
                 attention_mask = batch[0]["attention_mask"]
                 labels = batch[1]
 
