@@ -8,11 +8,6 @@ from tensorflow.keras import Input, Model
 
 # Load the IMDb dataset (you can replace this with your own dataset)
 from datasets import load_dataset
-
-# Load the Hugging Face tokenizer and model
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-model = TFAutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
-
 # Create a strategy to distribute the training across multiple GPUs
 strategy = tf.distribute.MirroredStrategy()
 
@@ -20,15 +15,15 @@ print(f'Number of devices: {strategy.num_replicas_in_sync}')
 
 # Load and preprocess the dataset
 dataset = load_dataset("imdb")
-encoded_data = tokenizer(
-    dataset["train"]["text"],
-    padding=True,
-    truncation=True,
-    return_tensors="tf",
-)
+
 
 # Use the strategy to create and compile the model
 with strategy.scope():
+
+    # Load the Hugging Face tokenizer and model
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    model = TFAutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=2)
+
     encoded_data = tokenizer(
     dataset["train"]["text"],
     padding=True,
