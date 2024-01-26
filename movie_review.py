@@ -1,6 +1,7 @@
 import tensorflow as tf
-from transformers import AutoTokenizer, TFAutoModelForSequenceClassification, AdamW
+from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers.schedules import PolynomialDecay
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.keras.metrics import SparseCategoricalAccuracy
 from tensorflow.keras import Input, Model
@@ -54,9 +55,19 @@ with strategy.scope():
 
     distributed_model = Model(inputs, outputs)
 
-    # Compile the model
+    # Define a custom learning rate schedule for AdamW
+    steps_per_epoch = len(train_dataset) // batch_size
+    lr_schedule = PolynomialDecay(
+        initial_learning_rate=learning_rate,
+        decay_steps=epochs * steps_per_epoch,
+        end_learning_rate=0.0,
+        power=1.0,
+        cycle=False
+    )
+
+    # Compile the model with the custom AdamW optimizer
     distributed_model.compile(
-        optimizer=AdamW(learning_rate=learning_rate),
+        optimizer=Adam(learning_rate=lr_schedule),
         loss=SparseCategoricalCrossentropy(),
         metrics=[SparseCategoricalAccuracy()],
     )
