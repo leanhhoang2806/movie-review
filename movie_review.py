@@ -5,6 +5,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Load the IMDb dataset (you can replace this with your own dataset)
 from datasets import load_dataset
+import tqdm
 
 dataset = load_dataset("imdb")
 
@@ -63,8 +64,15 @@ loss_fn = torch.nn.CrossEntropyLoss()
 
 # Training loop
 for epoch in range(epochs):
+    print(f"Epoch {epoch + 1}/{epochs}")
+
+    # Set the model to training mode
     model.train()
-    for batch in train_loader:
+
+    # Create a progress bar for the training data
+    train_loader_with_progress = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{epochs}, Training")
+
+    for batch in train_loader_with_progress:
         optimizer.zero_grad()
         input_ids = batch["input_ids"]
         attention_mask = batch["attention_mask"]
@@ -74,30 +82,30 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
 
+        # Update the progress bar
+        train_loader_with_progress.set_postfix(loss=loss.item())
+
     # Validation loop
     model.eval()
-    val_loss = 0.0
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for batch in val_loader:
-            input_ids = batch["input_ids"]
-            attention_mask = batch["attention_mask"]
-            labels = batch["labels"]
-            outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
-            loss = outputs.loss
-            val_loss += loss.item()
 
-            # Calculate accuracy
-            logits = outputs.logits
-            predictions = torch.argmax(logits, dim=1)
-            correct += (predictions == labels).sum().item()
-            total += labels.size(0)
+    # Create a progress bar for the validation data
+    val_loader_with_progress = tqdm(val_loader, desc=f"Epoch {epoch + 1}/{epochs}, Validation")
+
+    for batch in val_loader_with_progress:
+        input_ids = batch["input_ids"]
+        attention_mask = batch["attention_mask"]
+        labels = batch["labels"]
+        outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+        loss = outputs.loss
+
+        # Update the progress bar
+        val_loader_with_progress.set_postfix(loss=loss.item())
+
+    # Close the progress bars after each epoch
+    train_loader_with_progress.close()
+    val_loader_with_progress.close()
 
     # Print metrics
     avg_val_loss = val_loss / len(val_loader)
     accuracy = correct / total
     print(f"Epoch {epoch + 1}/{epochs}, Loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.4f}")
-
-# Save the fine-tuned model
-model.save_pretrained("path/to/save/model")
