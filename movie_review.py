@@ -84,15 +84,14 @@ with strategy.scope():
 
         # Train the model
         for i, (batch_inputs, labels) in enumerate(train_dataset):
-            optimizer.zero_grad()
-            input_ids = batch_inputs["input_ids"]
-            attention_mask = batch_inputs["attention_mask"]
-
+            # Calculate gradients
             with tf.GradientTape() as tape:
-                outputs = distributed_model(input_ids, attention_mask=attention_mask, labels=labels)
-                loss = outputs.loss
+                outputs = distributed_model(batch_inputs, training=True)
+                loss = distributed_model.compiled_loss(labels, outputs)
 
             gradients = tape.gradient(loss, distributed_model.trainable_variables)
+
+            # Apply gradients
             optimizer.apply_gradients(zip(gradients, distributed_model.trainable_variables))
 
             if (i + 1) % accumulation_steps == 0:
